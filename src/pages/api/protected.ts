@@ -17,6 +17,7 @@ export default async function handler(
   }
 
   res.json({
+    date: new Date().toISOString(),
     msg: `Sabemos quien sos ${session.user.name}`,
     user: session.user,
   });

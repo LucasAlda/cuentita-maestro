@@ -1,4 +1,3 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -13,9 +12,9 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useNotification } from "@/hooks/use-notification";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import Head from "next/head";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export default function Home() {
   return (
@@ -26,7 +25,7 @@ export default function Home() {
       </Head>
 
       <main className="flex grow flex-col items-center justify-center gap-10">
-        <Reclamo />
+        <Reclaim />
         <FetchProtected />
         <Notifications />
       </main>
@@ -34,13 +33,16 @@ export default function Home() {
   );
 }
 
+import { useQuery } from "@tanstack/react-query";
+
 function FetchProtected() {
-  const [response, setResponse] = useState("");
+  const { data: response, refetch } = useQuery({
+    queryKey: ["protected"],
+    refetchInterval: 1000 * 5,
+  });
 
   async function fetchProtected() {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const data = await fetch("/api/protected").then((res) => res.json());
-    setResponse(JSON.stringify(data, null, 2));
+    refetch();
   }
 
   return (
@@ -56,7 +58,7 @@ function FetchProtected() {
         <div className="min-h-96 w-screen max-w-xl rounded-lg border bg-slate-50 p-4">
           <pre>
             <code className="whitespace-break-spaces break-words">
-              {response}
+              {JSON.stringify(response, null, 2)}
             </code>
           </pre>
         </div>
@@ -65,12 +67,18 @@ function FetchProtected() {
   );
 }
 
-function Reclamo() {
+function Reclaim() {
+  const session = useSession();
   const [open, setOpen] = useState(false);
+  const [reclaim, setReclaim] = useState("Escriba su reclamo");
 
-  useEffect(() => {
-    console.log("El dialog se abrio o cerro");
-  }, [open]);
+  function selfReclaim() {
+    const user = session.data?.user;
+    if (!user) return;
+    fetch(
+      `/api/notifications/notify?id=${user.id}&title=Reclamo por ${user.name}&message=${reclaim}`,
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -84,10 +92,13 @@ function Reclamo() {
             Sos un gede, hablalo por wpp, son amigos en teoria
           </DialogDescription>
         </DialogHeader>
-        <Textarea></Textarea>
+        <Textarea
+          value={reclaim}
+          onChange={(e) => setReclaim(e.target.value)}
+        ></Textarea>
         <DialogFooter>
           <DialogClose>Cancelar</DialogClose>
-          <Button>Enviar</Button>
+          <Button onClick={selfReclaim}>Enviar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
