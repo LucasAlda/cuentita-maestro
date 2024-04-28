@@ -126,10 +126,30 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
 - `npm run db:studio`: abre un explorador de la base de datos, se va a abrir en `http://localhost:5555`
 
-## Otras cosas a saber usar (WIP)
+## Otras cosas a saber usar
 
 ### React Query
 
+Maneja todas las requests para hacer gets de datos facilmente.
+
+Uso: es un hook `useQuery` que recibe como parametro un objeto con las configuraciones, las principales son:
+- `queryKey`: es un array que tiene los strings que va a usar para formar la url a la que hacer el GET y usa ReactQuery internamente como key para el cache y cosas que no van al caso
+    Ej: `queryKey: ['groups', 'list']` es una request a `http://localhost:3000/api/groups/list` (la formula seria ENDPOINT + '/api/' + queryKey[0] + '/' +  queryKey[1] + '/' + ... + queryKey[n])  
+- `refetchInterval`: intervalo en milisegundos para hacer un refetch al endpoint
+- `enabled`: es un booleano para poder hacer que no haga el fetch hasta que no se cumpla cierta condicion necesaria para el request
+    Ej: `enabled: session.user !== undefined` si el query va a pasarle el id del usuario algo  
+
 ### Tailwind
 
+Define los estilos CSS por medio de clases pre definidas que son 1 a 1 con los estilos de css (w-10 le da width: 40px, p-4 le da padding: 16px, etc)
+
+Uso: <div className="w-40 h-10 p-4 bg-white rounded-lg">
+
 ### Prisma
+
+En el `prisma/schema.prisma` se definen las tablas con un schema definido por prisma (bastante comprensible) que despues este usa para dos cosas:
+1. Generar la base de datos con ese schema (en nuestro caso un sqlite en `prisma/db.sqlite` que es una base sql en formato de archivo asi que no necesitamos docker, ni instalar nada)
+2. Generar los tipos de Typescript para facilmente poder acceder a sus keys y demas sin tener que definir el tipo (similar a un struct de rust) a mano
+
+Para ver la base de datos y su contenido, se corre `npm run db:studio` en otra pestaña de la consola y eso te corre el studio en http://localhost:5555
+Para acceder a los tipos generados se importan de `@prisma/client`, el tipo de la tabla `Post` se importa como `import  { Post } from "@prisma/client"`
