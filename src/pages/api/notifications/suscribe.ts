@@ -1,12 +1,5 @@
 import { db } from "@/server/db";
 import { type NextApiRequest, type NextApiResponse } from "next";
-import webPush from "web-push";
-
-webPush.setVapidDetails(
-  `mailto:${process.env.WEB_PUSH_EMAIL}`,
-  process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY ?? "",
-  process.env.WEB_PUSH_PRIVATE_KEY ?? "",
-);
 
 export default async function handler(
   req: NextApiRequest,

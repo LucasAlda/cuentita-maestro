@@ -1,11 +1,14 @@
+// import { env } from "@/env";
 import { db } from "@/server/db";
 import webPush from "web-push";
 
-webPush.setVapidDetails(
-  `mailto:${process.env.WEB_PUSH_EMAIL}`,
-  process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY ?? "",
-  process.env.WEB_PUSH_PRIVATE_KEY ?? "",
-);
+/******  REINTRODUCIR CUANDO HAGAMOS NOTIFICACIONES Y ESTE EL ENV   ********/
+
+// webPush.setVapidDetails(
+//   `mailto:${env.WEB_PUSH_EMAIL}`,
+//   env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY ?? "",
+//   env.WEB_PUSH_PRIVATE_KEY ?? "",
+// );
 
 export async function sendNotification(
   id: string,
