@@ -1,5 +1,14 @@
 # Cuentita Maestro - Posible template
 
+## Iniciar el proyecto
+
+1. Clonar el repositorio
+2. Instalar las dependencias con `npm install`
+3. Copiar el archivo `.env.example` a `.env` y completar las variables de entorno
+4. Correr el proyecto con `npm run db:push` para crear la base de datos (`./prisma/db.sqlite`)
+5. Correr `npm run dev` para correr el proyecto en modo desarrollo
+6. Listo! Se va a abrir en `http://localhost:3000`
+
 ## Tecnologias
 
 - ### React: como libreria de front-end (https://react.dev/)

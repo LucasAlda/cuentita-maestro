@@ -1,22 +1,9 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { useNotification } from "@/hooks/use-notification";
 import { useSession } from "next-auth/react";
 import Head from "next/head";
-import { useState } from "react";
 
 export default function Home() {
+  const session = useSession();
+
   return (
     <>
       <Head>
@@ -24,104 +11,73 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className="flex grow flex-col items-center justify-center gap-10">
-        <Reclaim />
-        <FetchProtected />
-        <Notifications />
+      <main className="p-10">
+        <h1 className="text-3xl font-bold text-slate-800">
+          Hola, {session.data?.user.name}!
+        </h1>
+        <RickRollKorean />
       </main>
     </>
   );
 }
 
-import { useQuery } from "@tanstack/react-query";
-
-function FetchProtected() {
-  const { data: response, refetch } = useQuery({
-    queryKey: ["protected"],
-    refetchInterval: 1000 * 5,
-  });
-
-  async function fetchProtected() {
-    refetch();
-  }
-
+function RickRollKorean() {
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Peticion a un endpoint privado</CardTitle>
-          <Button onClick={() => fetchProtected()}>Fetch Protected</Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <h3>Response:</h3>
-        <div className="min-h-96 w-screen max-w-xl rounded-lg border bg-slate-50 p-4">
-          <pre>
-            <code className="whitespace-break-spaces break-words">
-              {JSON.stringify(response, null, 2)}
-            </code>
-          </pre>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function Reclaim() {
-  const session = useSession();
-  const [open, setOpen] = useState(false);
-  const [reclaim, setReclaim] = useState("Escriba su reclamo");
-
-  function selfReclaim() {
-    const user = session.data?.user;
-    if (!user) return;
-    fetch(
-      `/api/notifications/notify?id=${user.id}&title=Reclamo por ${user.name}&message=${reclaim}`,
-    );
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>Reclamar</Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Iniciar Reclamo</DialogTitle>
-          <DialogDescription>
-            Sos un gede, hablalo por wpp, son amigos en teoria
-          </DialogDescription>
-        </DialogHeader>
-        <Textarea
-          value={reclaim}
-          onChange={(e) => setReclaim(e.target.value)}
-        ></Textarea>
-        <DialogFooter>
-          <DialogClose>Cancelar</DialogClose>
-          <Button onClick={selfReclaim}>Enviar</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function Notifications() {
-  const session = useSession();
-  const notification = useNotification();
-
-  function notify() {
-    fetch(
-      `/api/notifications/notify?id=${session.data?.user.id}&title=Notificacion de Prueba&message=Esto fue enviado desde el home`,
-    );
-  }
-
-  return (
-    <div className="">
-      {notification.subscribed ? (
-        <Button onClick={notify}>Notificarme</Button>
-      ) : (
-        <Button onClick={notification.subscribe}>Subscribir</Button>
-      )}
+    <div className="space-y-2 py-8">
+      <p>우리는 사랑하기에 낯선 사람이 아닙니다</p>
+      <p>당신은 규칙을 알고 있고 나도 마찬가지입니다.</p>
+      <p>내가 생각하는 건 완전한 헌신이야</p>
+      <p>넌 다른 어떤 남자에게서도 이런 걸 얻지 못할 거야</p>
+      <p>그냥 내 기분이 어떤지 말해주고 싶어</p>
+      <p>이해시켜줘야지</p>
+      <p>절대 널 포기하지 않을 거야</p>
+      <p>결코 당신을 실망시키지 않을 거예요</p>
+      <p>절대로 뛰어다니거나 널 버리지 않을 거야</p>
+      <p>절대 널 울게 만들지 않을 거야</p>
+      <p>작별 인사는 절대 안 할 거야</p>
+      <p>절대로 거짓말을 해서 널 상처 입히지는 않을 거야</p>
+      <p>우리는 오랫동안 서로를 알고 있었어요</p>
+      <p>마음이 아팠지만 말하기엔 수줍은 너 (말해)</p>
+      <p>안에서, 우리 둘 다 무슨 일이 일어나고 있는지 알고 있어</p>
+      <p>우리는 게임을 알고 있고 그것을 할 것입니다</p>
+      <p>그리고 내 기분이 어떠냐고 묻는다면</p>
+      <p>너무 눈이 멀어 볼 수 없다고 말하지 마세요</p>
+      <p>절대 널 포기하지 않을 거야</p>
+      <p>결코 당신을 실망시키지 않을 거예요</p>
+      <p>절대로 뛰어다니거나 널 버리지 않을 거야</p>
+      <p>절대 널 울게 만들지 않을 거야</p>
+      <p>작별 인사는 절대 안 할 거야</p>
+      <p>절대로 거짓말을 해서 널 상처 입히지는 않을 거야</p>
+      <p>절대 널 포기하지 않을 거야</p>
+      <p>결코 당신을 실망시키지 않을 거예요</p>
+      <p>절대로 뛰어다니거나 널 버리지 않을 거야</p>
+      <p>절대 널 울게 만들지 않을 거야</p>
+      <p>작별 인사는 절대 안 할 거야</p>
+      <p>절대로 거짓말을 해서 널 상처 입히지는 않을 거야</p>
+      <p>우리는 오랫동안 서로를 알고 있었어요</p>
+      <p>마음이 아팠지만 말하기엔 수줍음이 많았지 (말하기엔)</p>
+      <p>안에서, 우리 둘 다 무슨 일이 일어나고 있는지 알고 있어</p>
+      <p>우리는 게임을 알고 있고 그것을 할 것입니다</p>
+      <p>그냥 내 기분이 어떤지 말해주고 싶어</p>
+      <p>이해시켜줘야지</p>
+      <p>절대 널 포기하지 않을 거야</p>
+      <p>결코 당신을 실망시키지 않을 거예요</p>
+      <p>절대로 뛰어다니거나 널 버리지 않을 거야</p>
+      <p>절대 널 울게 만들지 않을 거야</p>
+      <p>작별 인사는 절대 안 할 거야</p>
+      <p>절대로 거짓말을 해서 널 상처 입히지는 않을 거야</p>
+      <p>절대 널 포기하지 않을 거야</p>
+      <p>결코 당신을 실망시키지 않을 거예요</p>
+      <p>절대로 뛰어다니거나 널 버리지 않을 거야</p>
+      <p>절대 널 울게 만들지 않을 거야</p>
+      <p>작별 인사는 절대 안 할 거야</p>
+      <p>절대로 거짓말을 해서 널 상처 입히지는 않을 거야</p>
+      <p>절대 널 포기하지 않을 거야</p>
+      <p>결코 당신을 실망시키지 않을 거예요</p>
+      <p>절대로 뛰어다니거나 널 버리지 않을 거야</p>
+      <p>절대 널 울게 만들지 않을 거야</p>
+      <p>작별 인사는 절대 안 할 거야</p>
+      <p>절대로 거짓말을 해서 널 상처 입히지는 않을 거야</p>
     </div>
   );
 }

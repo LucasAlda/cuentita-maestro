@@ -100,7 +100,7 @@ export function Navbar() {
                 <DropdownMenuLabel>{session.data.user.name}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => signOut()}>
-                  Logout
+                  Cerrar sesión
                 </DropdownMenuItem>
               </>
             ) : (
@@ -108,7 +108,7 @@ export function Navbar() {
                 <DropdownMenuLabel>Cuenta</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => signIn()}>
-                  Iniciar sesion
+                  Iniciar sesión
                 </DropdownMenuItem>
               </>
             )}
