@@ -41,7 +41,13 @@ const Providers: AppType = ({ Component, pageProps }) => {
   );
 };
 
-const publicPaths = ["/login", "/api/auth"];
+const publicPaths = [
+  "/login",
+  "/api/auth",
+  "/sw.js",
+  "/start-workers.js",
+  "/favicon.ico",
+];
 
 function App({ children }: { children: React.ReactNode }) {
   const session = useSession();
