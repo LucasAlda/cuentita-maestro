@@ -1,5 +1,27 @@
 import { useSession } from "next-auth/react";
 import Head from "next/head";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useEffect, useState } from "react";
 
 export default function Home() {
   const session = useSession();
@@ -15,69 +37,179 @@ export default function Home() {
         <h1 className="text-3xl font-bold text-slate-800">
           Hola, {session.data?.user.name}!
         </h1>
-        <RickRollKorean />
+        <CreateGroupDialog />
       </main>
     </>
   );
 }
 
-function RickRollKorean() {
+export function CreateGroupDialog() {
+  const [invitationLink, setInvitationLink] = useState<string | undefined>();
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setTimeout(() => {
+        setInvitationLink(undefined);
+      }, 300);
+    }
+  }, [open]);
+
   return (
-    <div className="space-y-2 py-8">
-      <p>우리는 사랑하기에 낯선 사람이 아닙니다</p>
-      <p>당신은 규칙을 알고 있고 나도 마찬가지입니다.</p>
-      <p>내가 생각하는 건 완전한 헌신이야</p>
-      <p>넌 다른 어떤 남자에게서도 이런 걸 얻지 못할 거야</p>
-      <p>그냥 내 기분이 어떤지 말해주고 싶어</p>
-      <p>이해시켜줘야지</p>
-      <p>절대 널 포기하지 않을 거야</p>
-      <p>결코 당신을 실망시키지 않을 거예요</p>
-      <p>절대로 뛰어다니거나 널 버리지 않을 거야</p>
-      <p>절대 널 울게 만들지 않을 거야</p>
-      <p>작별 인사는 절대 안 할 거야</p>
-      <p>절대로 거짓말을 해서 널 상처 입히지는 않을 거야</p>
-      <p>우리는 오랫동안 서로를 알고 있었어요</p>
-      <p>마음이 아팠지만 말하기엔 수줍은 너 (말해)</p>
-      <p>안에서, 우리 둘 다 무슨 일이 일어나고 있는지 알고 있어</p>
-      <p>우리는 게임을 알고 있고 그것을 할 것입니다</p>
-      <p>그리고 내 기분이 어떠냐고 묻는다면</p>
-      <p>너무 눈이 멀어 볼 수 없다고 말하지 마세요</p>
-      <p>절대 널 포기하지 않을 거야</p>
-      <p>결코 당신을 실망시키지 않을 거예요</p>
-      <p>절대로 뛰어다니거나 널 버리지 않을 거야</p>
-      <p>절대 널 울게 만들지 않을 거야</p>
-      <p>작별 인사는 절대 안 할 거야</p>
-      <p>절대로 거짓말을 해서 널 상처 입히지는 않을 거야</p>
-      <p>절대 널 포기하지 않을 거야</p>
-      <p>결코 당신을 실망시키지 않을 거예요</p>
-      <p>절대로 뛰어다니거나 널 버리지 않을 거야</p>
-      <p>절대 널 울게 만들지 않을 거야</p>
-      <p>작별 인사는 절대 안 할 거야</p>
-      <p>절대로 거짓말을 해서 널 상처 입히지는 않을 거야</p>
-      <p>우리는 오랫동안 서로를 알고 있었어요</p>
-      <p>마음이 아팠지만 말하기엔 수줍음이 많았지 (말하기엔)</p>
-      <p>안에서, 우리 둘 다 무슨 일이 일어나고 있는지 알고 있어</p>
-      <p>우리는 게임을 알고 있고 그것을 할 것입니다</p>
-      <p>그냥 내 기분이 어떤지 말해주고 싶어</p>
-      <p>이해시켜줘야지</p>
-      <p>절대 널 포기하지 않을 거야</p>
-      <p>결코 당신을 실망시키지 않을 거예요</p>
-      <p>절대로 뛰어다니거나 널 버리지 않을 거야</p>
-      <p>절대 널 울게 만들지 않을 거야</p>
-      <p>작별 인사는 절대 안 할 거야</p>
-      <p>절대로 거짓말을 해서 널 상처 입히지는 않을 거야</p>
-      <p>절대 널 포기하지 않을 거야</p>
-      <p>결코 당신을 실망시키지 않을 거예요</p>
-      <p>절대로 뛰어다니거나 널 버리지 않을 거야</p>
-      <p>절대 널 울게 만들지 않을 거야</p>
-      <p>작별 인사는 절대 안 할 거야</p>
-      <p>절대로 거짓말을 해서 널 상처 입히지는 않을 거야</p>
-      <p>절대 널 포기하지 않을 거야</p>
-      <p>결코 당신을 실망시키지 않을 거예요</p>
-      <p>절대로 뛰어다니거나 널 버리지 않을 거야</p>
-      <p>절대 널 울게 만들지 않을 거야</p>
-      <p>작별 인사는 절대 안 할 거야</p>
-      <p>절대로 거짓말을 해서 널 상처 입히지는 않을 거야</p>
-    </div>
+    <Dialog onOpenChange={setOpen} open={open}>
+      <DialogTrigger asChild>
+        <Button variant="outline">Crear Cuentita</Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        {!invitationLink ? (
+          <CreateCuentitaForm
+            open={open}
+            onCuentitaCreated={setInvitationLink}
+          />
+        ) : (
+          <CreateCuentitaLink link={invitationLink} />
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+type CreateResponse =
+  | { success: true; invitationLink: string }
+  | { success: false; errors: string[] }
+  | undefined;
+
+function CreateCuentitaForm(props: {
+  open: boolean;
+  onCuentitaCreated: (link: string | undefined) => void;
+}) {
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState("");
+  const [inflation, setInflation] = useState(false);
+  const [response, setResponse] = useState<CreateResponse>();
+
+  const handleSubmit = () => {
+    fetch("/api/cuentita/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, category, inflation }),
+    })
+      .then((res) => res.json())
+      .then((data: CreateResponse) => {
+        setResponse(data);
+        if (data?.success) {
+          props.onCuentitaCreated(data.invitationLink);
+        }
+      });
+  };
+
+  useEffect(() => {
+    if (!props.open) {
+      setTimeout(() => {
+        setName("");
+        setCategory("");
+        setInflation(false);
+        setResponse(undefined);
+      }, 300);
+    }
+  }, [props.open]);
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>Crear Cuentita</DialogTitle>
+        <DialogDescription>
+          Configure los datos de la cuentita.
+        </DialogDescription>
+      </DialogHeader>
+      <div className="grid gap-4 py-4">
+        <div className="space-y-1">
+          <Label htmlFor="nombre">Nombre</Label>
+          <Input
+            id="nombre"
+            placeholder="Futbol 5 de los domingos"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="categoria" className="text-right">
+            Categoría
+          </Label>
+          <Select
+            value={category}
+            onValueChange={(value) => setCategory(value)}
+          >
+            <SelectTrigger id="categoria" className="col-span-3">
+              <SelectValue placeholder="Selecciona una Categoría" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="evento">Evento</SelectItem>
+              <SelectItem value="familia">Familia</SelectItem>
+              <SelectItem value="amigos">Amigos</SelectItem>
+              <SelectItem value="deporte">Deporte</SelectItem>
+              <SelectItem value="hogar">Hogar</SelectItem>
+              <SelectItem value="viaje">Viaje</SelectItem>
+              <SelectItem value="otro">Otro</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center space-x-2 pt-4">
+          <Checkbox
+            id="terms"
+            checked={inflation}
+            onCheckedChange={(checked) =>
+              checked !== "indeterminate" && setInflation(checked)
+            }
+          />
+          <label
+            htmlFor="terms"
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          >
+            Ajustar por inflación
+          </label>
+          <span className="text-xs text-slate-500">(Proximamente)</span>
+        </div>
+      </div>
+      {response?.success === false && (
+        <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm">
+          <ul className="list-inside list-disc text-red-600">
+            {response.errors.map((error) => (
+              <li key={error}>{error}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <DialogFooter>
+        <DialogClose asChild>
+          <Button variant="outline">Cancelar</Button>
+        </DialogClose>
+        <Button onClick={handleSubmit}>Crear</Button>
+      </DialogFooter>
+    </>
+  );
+}
+
+function CreateCuentitaLink(props: { link: string | undefined }) {
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>¡Cuentita Creada!</DialogTitle>
+        <DialogDescription>
+          ¡Ya puedes invitar a tus amigos a la cuentita!
+        </DialogDescription>
+      </DialogHeader>
+      <div className="grid gap-4 py-4">
+        <div className="space-y-1">
+          <Label htmlFor="link">Enlace de Invitación</Label>
+          <Input id="link" value={props.link} readOnly />
+        </div>
+      </div>
+      <DialogFooter>
+        <DialogClose asChild>
+          <Button variant="outline">Cerrar</Button>
+        </DialogClose>
+      </DialogFooter>
+    </>
   );
 }
