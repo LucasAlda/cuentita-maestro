@@ -1,3 +1,6 @@
+import { env } from "@/env";
+import { getServerAuthSession } from "@/server/auth";
+import { db } from "@/server/db";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { z } from "zod";
 
@@ -26,6 +29,12 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
+  const session = await getServerAuthSession({ req, res });
+  if (!session) {
+    res.status(401).json({ message: "Unauthorized" });
+    return;
+  }
+
   if (req.method !== "POST") {
     res.status(405).json({ message: "Method Not Allowed" });
     return;
@@ -33,17 +42,32 @@ export default async function handler(
 
   const newCuentita = newCuentitaSchema.safeParse(req.body);
   if (!newCuentita.success) {
-    res
-      .status(400)
-      .json({
-        success: false,
-        errors: newCuentita.error.errors.map((e) => e.message),
-      });
+    res.status(400).json({
+      success: false,
+      errors: newCuentita.error.errors.map((e) => e.message),
+    });
+    return;
   }
 
   console.log(`Creada:`, req.body);
+  const cuentita = await db.cuentita.create({
+    data: {
+      name: newCuentita.data.name,
+      category: newCuentita.data.category,
+      inflation: newCuentita.data.inflation,
+      createdById: session?.user?.id,
+    },
+  });
+
+  await db.member.create({
+    data: {
+      userId: session.user.id,
+      cuentitaId: cuentita.id,
+    },
+  });
+
   res.json({
     success: true,
-    invitationLink: "https://cuentita.vercel.app/invite/123",
+    invitationLink: `${env.NEXT_URL}/invite/${cuentita.id}`,
   });
 }

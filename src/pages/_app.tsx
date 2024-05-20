@@ -8,6 +8,7 @@ import { Navbar } from "@/components/navbar";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
+import { Toaster } from "sonner";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -71,6 +72,7 @@ function App({ children }: { children: React.ReactNode }) {
     >
       <Navbar />
       {children}
+      <Toaster richColors />
     </main>
   );
 }

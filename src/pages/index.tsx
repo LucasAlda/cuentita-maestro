@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect, useState } from "react";
+import { Copy } from "lucide-react";
+import { toast } from "sonner";
 
 export default function Home() {
   const session = useSession();
@@ -60,7 +62,7 @@ export function CreateGroupDialog() {
       <DialogTrigger asChild>
         <Button variant="outline">Crear Cuentita</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[525px]">
         {!invitationLink ? (
           <CreateCuentitaForm
             open={open}
@@ -191,6 +193,12 @@ function CreateCuentitaForm(props: {
 }
 
 function CreateCuentitaLink(props: { link: string | undefined }) {
+  const copy = () => {
+    if (!props.link) return;
+    navigator.clipboard.writeText(props.link);
+    toast.success("Enlace copiado al portapapeles");
+  };
+
   return (
     <>
       <DialogHeader>
@@ -202,7 +210,12 @@ function CreateCuentitaLink(props: { link: string | undefined }) {
       <div className="grid gap-4 py-4">
         <div className="space-y-1">
           <Label htmlFor="link">Enlace de Invitación</Label>
-          <Input id="link" value={props.link} readOnly />
+          <div className="flex gap-1">
+            <Input id="link" value={props.link} readOnly />
+            <Button size={"icon"} variant="outline" onClick={copy}>
+              <Copy className="h-4 w-4 text-slate-600" />
+            </Button>
+          </div>
         </div>
       </div>
       <DialogFooter>
