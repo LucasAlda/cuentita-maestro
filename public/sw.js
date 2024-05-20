@@ -3,7 +3,6 @@
 
 self.addEventListener("push", function (event) {
   const data = JSON.parse(event.data.text());
-  console.log("AAHAHHHAHAHAH");
   event.waitUntil(
     registration.showNotification(data.title, {
       body: data.message,

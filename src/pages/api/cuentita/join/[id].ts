@@ -8,13 +8,13 @@ export default async function handler(
 ) {
   const session = await getServerAuthSession({ req, res });
   if (!session) {
-    res.status(401).json({ message: "Unauthorized" });
+    res.status(401).json({ message: "No autorizado" });
     return;
   }
 
   const { id } = req.query;
   if (typeof id !== "string") {
-    res.status(400).json({ message: "Invalid ID" });
+    res.status(400).json({ message: "Invitación inválida" });
     return;
   }
 
@@ -26,7 +26,7 @@ export default async function handler(
   });
 
   if (!cuentita) {
-    res.status(404).json({ message: "Cuentita Not found" });
+    res.status(404).json({ message: "Cuentita no encontrada!" });
     return;
   }
 
@@ -37,10 +37,19 @@ export default async function handler(
     },
   });
 
+  if (membership) {
+    res.status(400).json({ message: "Ya sos miembro de esta cuentita!" });
+    return;
+  }
+
+  await db.member.create({
+    data: {
+      userId: session.user.id,
+      cuentitaId: id,
+    },
+  });
+
   res.json({
-    name: cuentita.name,
-    category: cuentita.category,
-    createdBy: cuentita.Creator.name,
-    alreadyMember: Boolean(membership),
+    success: true,
   });
 }

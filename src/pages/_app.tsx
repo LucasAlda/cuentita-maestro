@@ -18,10 +18,11 @@ const inter = Inter({
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      retry: false,
       queryFn: ({ queryKey }) =>
-        fetch("/api/" + queryKey.join("/")).then((res) => {
+        fetch("/api/" + queryKey.join("/")).then(async (res) => {
           if (!res.ok) {
-            throw new Error("Error en la peticion");
+            throw await res.json();
           }
           return res.json();
         }),
