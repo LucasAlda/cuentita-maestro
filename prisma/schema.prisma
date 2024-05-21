@@ -15,16 +15,15 @@ datasource db {
 }
 
 model Cuentita {
-    id          String    @id @default(cuid())
+    id          String   @id @default(cuid())
     name        String
-    createdAt   DateTime  @default(now())
-    updatedAt   DateTime  @updatedAt
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
     category    String
     inflation   Boolean
     createdById String
-    Creator     User      @relation(fields: [createdById], references: [id])
+    Creator     User     @relation(fields: [createdById], references: [id])
     Member      Member[]
-    Account     Account[]
 
     @@index([name])
 }
@@ -41,7 +40,7 @@ model Member {
 
 // Necessary for Next auth
 model Account {
-    id                String    @id @default(cuid())
+    id                String  @id @default(cuid())
     userId            String
     type              String
     provider          String
@@ -53,9 +52,7 @@ model Account {
     scope             String?
     id_token          String? // @db.Text
     session_state     String?
-    user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-    Cuentita          Cuentita? @relation(fields: [cuentitaId], references: [id])
-    cuentitaId        String?
+    user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@unique([provider, providerAccountId])
 }
@@ -77,7 +74,7 @@ model User {
     accounts                Account[]
     sessions                Session[]
     NotificationSuscription NotificationSuscription[]
-    Cuentita                Cuentita[]
+    CreatorOf               Cuentita[]
     Member                  Member[]
 }
 

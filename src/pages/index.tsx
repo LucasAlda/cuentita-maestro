@@ -1,4 +1,3 @@
-import { useSession } from "next-auth/react";
 import Head from "next/head";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,7 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect, useState } from "react";
 import { ChevronRight, Copy } from "lucide-react";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type Cuentita } from "@prisma/client";
 import Link from "next/link";
 
@@ -38,7 +37,9 @@ export default function Home() {
 
       <main className="mx-auto w-full max-w-xl space-y-4 py-10">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-slate-800">Mis cuentitas!</h1>
+          <h1 className="pl-1 text-2xl font-bold text-slate-800">
+            Mis cuentitas!
+          </h1>
           <CreateGroupDialog />
         </div>
         <GroupList />
@@ -58,15 +59,20 @@ function GroupList() {
   const { data, isError } = useQuery<(Cuentita & { balance: number })[]>({
     queryKey: ["/cuentita/list"],
   });
+
   if (!data || isError) {
     return null;
   }
 
   return (
-    <div className="divide-y divide-slate-100 rounded-lg bg-white shadow shadow-slate-200">
+    <div className="divide-y divide-slate-200/70 rounded-lg bg-white shadow shadow-slate-200">
       {data.map((cuentita) => (
-        <Link href={`/cuentita/${cuentita.id}`} key={cuentita.id}>
-          <button className="flex w-full items-center justify-between px-4 py-2 text-left hover:cursor-pointer hover:bg-slate-50">
+        <Link
+          href={`/cuentita/${cuentita.id}`}
+          key={cuentita.id}
+          className="block"
+        >
+          <button className="flex w-full items-center justify-between px-6 py-3 text-left hover:cursor-pointer hover:bg-slate-50">
             <div>
               <h3 className="font-semibold">{cuentita.name}</h3>
               <p className="text-sm capitalize text-slate-500">
@@ -135,6 +141,8 @@ function CreateCuentitaForm(props: {
   const [inflation, setInflation] = useState(false);
   const [response, setResponse] = useState<CreateResponse>();
 
+  const ctx = useQueryClient();
+
   const handleSubmit = () => {
     fetch("/api/cuentita/create", {
       method: "POST",
@@ -146,6 +154,7 @@ function CreateCuentitaForm(props: {
         setResponse(data);
         if (data?.success) {
           props.onCuentitaCreated(data.invitationLink);
+          ctx.invalidateQueries();
         }
       });
   };

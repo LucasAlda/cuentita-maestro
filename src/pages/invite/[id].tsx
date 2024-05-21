@@ -60,7 +60,7 @@ export default function Invite() {
       {isError ? (
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle>Grupo no encontrado!</CardTitle>
+            <CardTitle>Invitación inválida!</CardTitle>
             <CardDescription>
               Revise el link de invitación o contacte al creador de la cuentita
             </CardDescription>

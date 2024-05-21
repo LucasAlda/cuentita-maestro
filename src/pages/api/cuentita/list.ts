@@ -1,6 +1,6 @@
 import { getServerAuthSession } from "@/server/auth";
 import { db } from "@/server/db";
-import { NextApiRequest, NextApiResponse } from "next";
+import { type NextApiRequest, type NextApiResponse } from "next";
 
 export default async function handler(
   req: NextApiRequest,
@@ -12,17 +12,15 @@ export default async function handler(
     return;
   }
 
-  const user = await db.user.findUnique({
-    where: { id: session.user.id },
-    include: { Cuentita: true },
+  const cuentitas = await db.cuentita.findMany({
+    where: {
+      Member: {
+        some: {
+          userId: session?.user?.id,
+        },
+      },
+    },
   });
-
-  if (!user) {
-    res.status(400).json({ message: "User does not exist" });
-    return;
-  }
-
-  const cuentitas = user?.Cuentita;
 
   res.json(
     cuentitas.map((cuentita) => ({

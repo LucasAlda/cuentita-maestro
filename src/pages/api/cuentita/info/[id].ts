@@ -17,7 +17,10 @@ export default async function handler(
     return;
   }
   const cuentita = await db.cuentita.findUnique({
-    where: { id: req.query.id },
+    where: {
+      id: req.query.id,
+      Member: { some: { userId: session?.user?.id } },
+    },
   });
 
   if (!cuentita) {

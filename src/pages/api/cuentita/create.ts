@@ -13,7 +13,7 @@ const newCuentitaSchema = z.object({
     .min(3, "El nombre debe tener mínimo 3 caracteres")
     .max(64, "El nombre debe tener máximo 64 caracteres")
     .regex(
-      /^[a-zA-Z0-9\-_.!()?@:/]+$/,
+      /^[a-zA-Z0-9\-_.!()?@:/ ]+$/,
       "el nombre debe ser letras, números o símbolos -_.!()?@:/",
     ),
   category: z
@@ -49,7 +49,6 @@ export default async function handler(
     return;
   }
 
-  console.log(`Creada:`, req.body);
   const cuentita = await db.cuentita.create({
     data: {
       name: newCuentita.data.name,
