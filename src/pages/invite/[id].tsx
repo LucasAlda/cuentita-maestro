@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/router";
+import { useState } from "react";
 import { toast } from "sonner";
 
 type Invitation =
@@ -23,6 +24,7 @@ type Invitation =
 export default function Invite() {
   const router = useRouter();
   const id = router.query.id;
+  const [isSending, setSending] = useState(false);
 
   const { data: invitation, isError } = useQuery<Invitation>({
     queryKey: ["/cuentita/view-invitation", id],
@@ -35,7 +37,9 @@ export default function Invite() {
   }
 
   function acceptInvitation() {
-    if (typeof id !== "string") return;
+    if (typeof id !== "string" || isSending) return;
+    setSending(true);
+
     fetch("/api/cuentita/join/" + id)
       .then(async (res) => {
         console.log(res.status);
@@ -93,7 +97,9 @@ export default function Invite() {
               <Button onClick={declineInvitation} variant="outline">
                 Rechazar
               </Button>
-              <Button onClick={acceptInvitation}>Aceptar</Button>
+              <Button onClick={acceptInvitation} disabled={isSending}>
+                {isSending ? "Uniendose..." : "Unirse"}
+              </Button>
             </CardFooter>
           )}
         </Card>
