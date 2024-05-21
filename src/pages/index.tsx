@@ -45,7 +45,7 @@ export default function Home() {
   );
 }
 
-export function CreateGroupDialog() {
+function CreateGroupDialog() {
   const [invitationLink, setInvitationLink] = useState<string | undefined>();
   const [open, setOpen] = useState(false);
 
