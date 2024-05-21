@@ -24,5 +24,10 @@ export default async function handler(
 
   const cuentitas = user?.Cuentita;
 
-  res.json(cuentitas);
+  res.json(
+    cuentitas.map((cuentita) => ({
+      ...cuentita,
+      balance: Math.random() * 1000 - 500,
+    })),
+  );
 }

@@ -22,14 +22,13 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect, useState } from "react";
-import { Copy } from "lucide-react";
+import { ChevronRight, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
-import { Cuentita } from "@prisma/client";
+import { type Cuentita } from "@prisma/client";
+import Link from "next/link";
 
 export default function Home() {
-  const session = useSession();
-
   return (
     <>
       <Head>
@@ -48,8 +47,15 @@ export default function Home() {
   );
 }
 
+const numberFormatter = new Intl.NumberFormat("es-AR", {
+  style: "currency",
+  currency: "ARS",
+  maximumFractionDigits: 2,
+  minimumIntegerDigits: 2,
+});
+
 function GroupList() {
-  const { data, isError } = useQuery<Cuentita[]>({
+  const { data, isError } = useQuery<(Cuentita & { balance: number })[]>({
     queryKey: ["/cuentita/list"],
   });
   if (!data || isError) {
@@ -59,10 +65,26 @@ function GroupList() {
   return (
     <div className="divide-y divide-slate-100 rounded-lg bg-white shadow shadow-slate-200">
       {data.map((cuentita) => (
-        <div className="px-4 py-2">
-          <h3>{cuentita.name}</h3>
-          {cuentita.category}
-        </div>
+        <Link href={`/cuentita/${cuentita.id}`} key={cuentita.id}>
+          <button className="flex w-full items-center justify-between px-4 py-2 text-left hover:cursor-pointer hover:bg-slate-50">
+            <div>
+              <h3 className="font-semibold">{cuentita.name}</h3>
+              <p className="text-sm capitalize text-slate-500">
+                {cuentita.category}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <p
+                className={
+                  cuentita.balance >= 0 ? "text-green-600" : "text-red-600"
+                }
+              >
+                {numberFormatter.format(cuentita.balance)}
+              </p>
+              <ChevronRight className="h-4 w-4 text-slate-400" />
+            </div>
+          </button>
+        </Link>
       ))}
     </div>
   );
@@ -83,7 +105,7 @@ function CreateGroupDialog() {
   return (
     <Dialog onOpenChange={setOpen} open={open}>
       <DialogTrigger asChild>
-        <Button variant="outline">Crear Cuentita</Button>
+        <Button>Crear Cuentita</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[525px]">
         {!invitationLink ? (
