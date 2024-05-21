@@ -24,6 +24,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect, useState } from "react";
 import { Copy } from "lucide-react";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { Cuentita } from "@prisma/client";
 
 export default function Home() {
   const session = useSession();
@@ -35,13 +37,34 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className="p-10">
-        <h1 className="text-3xl font-bold text-slate-800">
-          Hola, {session.data?.user.name}!
-        </h1>
-        <CreateGroupDialog />
+      <main className="mx-auto w-full max-w-xl space-y-4 py-10">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold text-slate-800">Mis cuentitas!</h1>
+          <CreateGroupDialog />
+        </div>
+        <GroupList />
       </main>
     </>
+  );
+}
+
+function GroupList() {
+  const { data, isError } = useQuery<Cuentita[]>({
+    queryKey: ["/cuentita/list"],
+  });
+  if (!data || isError) {
+    return null;
+  }
+
+  return (
+    <div className="divide-y divide-slate-100 rounded-lg bg-white shadow shadow-slate-200">
+      {data.map((cuentita) => (
+        <div className="px-4 py-2">
+          <h3>{cuentita.name}</h3>
+          {cuentita.category}
+        </div>
+      ))}
+    </div>
   );
 }
 
