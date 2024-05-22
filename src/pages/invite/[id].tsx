@@ -42,7 +42,6 @@ export default function Invite() {
 
     fetch("/api/cuentita/join/" + id)
       .then(async (res) => {
-        console.log(res.status);
         if (!res.ok) throw await res.json();
 
         toast.success("¡Te has unido a la cuentita!");

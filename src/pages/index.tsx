@@ -65,7 +65,12 @@ function GroupList() {
   }
 
   return (
-    <div className="divide-y divide-slate-200/70 rounded-lg bg-white shadow shadow-slate-200">
+    <div className="divide-y divide-slate-200/70 rounded-lg bg-white shadow-md shadow-slate-200">
+      {data.length === 0 && (
+        <div className="py-12 text-center text-sm italic text-slate-500">
+          No hay Cuentitas
+        </div>
+      )}
       {data.map((cuentita) => (
         <Link
           href={`/cuentita/${cuentita.id}`}

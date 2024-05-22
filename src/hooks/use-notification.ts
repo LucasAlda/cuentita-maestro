@@ -30,7 +30,6 @@ export function useNotification() {
   }, []);
 
   const subscribe = async () => {
-    console.log(registration.current, user);
     if (!registration.current || !user) return;
 
     /******  REINTRODUCIR CUANDO HAGAMOS NOTIFICACIONES Y ESTE EL ENV   ********/

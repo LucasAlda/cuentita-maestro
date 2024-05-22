@@ -12,8 +12,6 @@ export default async function handler(
     return;
   }
 
-  console.log(req.query);
-
   const cuentitaId = req.query.cuentitaId as string;
   const cuentitas = await db.gastito.findMany({
     where: {

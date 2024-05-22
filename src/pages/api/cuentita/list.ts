@@ -44,7 +44,7 @@ export default async function handler(
           },
         });
 
-        const ownedAmount = Number(ownedGastitos._sum.amount || 0);
+        const ownedAmount = Number(ownedGastitos._sum.amount ?? 0);
 
         const sharesAmount = shares.reduce(
           (balance: number, share) => balance + Number(share.amount),

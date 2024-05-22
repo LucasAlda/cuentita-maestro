@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { Toaster } from "sonner";
+import Head from "next/head";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -44,7 +45,8 @@ const Providers: AppType = ({ Component, pageProps }) => {
 };
 
 const publicPaths = [
-  "/login",
+  "/auth",
+  "/logo",
   "/api/auth",
   "/sw.js",
   "/start-workers.js",
@@ -71,7 +73,11 @@ function App({ children }: { children: React.ReactNode }) {
     <main
       className={`flex min-h-screen w-full flex-col bg-slate-100 font-sans ${inter.variable}`}
     >
-      <Navbar />
+      <Head>
+        <title>Cuentita Maestro</title>
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+      {!router.pathname.startsWith("/auth") && <Navbar />}
       {children}
       <Toaster richColors />
     </main>

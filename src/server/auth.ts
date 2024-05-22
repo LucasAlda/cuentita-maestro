@@ -40,6 +40,11 @@ export const authOptions: NextAuthOptions = {
         id: user.id,
       },
     }),
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      else if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
+    },
   },
   adapter: PrismaAdapter(db) as Adapter,
   providers: [
@@ -52,6 +57,10 @@ export const authOptions: NextAuthOptions = {
       clientSecret: env.FACEBOOK_CLIENT_SECRET,
     }),
   ],
+
+  pages: {
+    signIn: "/auth/signin",
+  },
 };
 
 /**

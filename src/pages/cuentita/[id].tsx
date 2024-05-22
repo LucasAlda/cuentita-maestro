@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Head from "next/head";
-import { Gastito, Member, User, type Cuentita } from "@prisma/client";
+import { type Gastito, type User, type Cuentita } from "@prisma/client";
 import { useRouter } from "next/router";
 import {
   Card,
@@ -85,8 +86,15 @@ export default function Cuentita() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="secondary">Editar</Button>
-                  <Button>Miembros</Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => alert("Proximamente...")}
+                  >
+                    Editar
+                  </Button>
+                  <Button onClick={() => alert("Proximamente...")}>
+                    Miembros
+                  </Button>
                 </div>
               </div>
 
@@ -132,7 +140,7 @@ type Shares = Record<string, number>;
 function AddGastitoDialog() {
   const router = useRouter();
   const cuentitaId = router.query.id as string;
-  const ownerId = useSession().data?.user.id as string;
+  const ownerId = useSession().data?.user.id!;
 
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -144,11 +152,7 @@ function AddGastitoDialog() {
 
   const ctx = useQueryClient();
 
-  const {
-    data: cuentitaInfo,
-    isError: infoIsError,
-    isLoading,
-  } = useQuery<
+  const { data: cuentitaInfo, isLoading } = useQuery<
     Cuentita & {
       members: User[];
     }
@@ -169,6 +173,7 @@ function AddGastitoDialog() {
     });
 
     setShares(defaultShares);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading]);
 
   const handleSubmit = () => {
@@ -284,7 +289,10 @@ function AddGastitoDialog() {
             <div className="space-y-2">
               {cuentitaInfo?.members.map((user) => {
                 return (
-                  <div className="flex items-center justify-between gap-2">
+                  <div
+                    key={user.id}
+                    className="flex items-center justify-between gap-2"
+                  >
                     <div className="flex items-center gap-2">
                       <Checkbox
                         checked={Boolean(shares?.[user.id])}
@@ -306,7 +314,7 @@ function AddGastitoDialog() {
                     </div>
                     <Input
                       className="h-8 w-24"
-                      value={shares?.[user.id] || ""}
+                      value={shares?.[user.id] ?? ""}
                       type="number"
                       onChange={(e) => {
                         setShares((shares) => {
@@ -359,11 +367,16 @@ function MovementsList() {
   }
 
   return (
-    <div className="divide-y divide-slate-200/70 rounded-lg bg-white shadow shadow-slate-200">
+    <div className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
+      {gastitos.length === 0 && (
+        <div className="py-10 text-center text-sm italic text-slate-500">
+          No hay movimientos
+        </div>
+      )}
       {gastitos.map((gastito) => (
-        <button
+        <div
           key={gastito.id}
-          className="flex w-full items-center justify-between px-6 py-3 text-left hover:cursor-pointer hover:bg-slate-50"
+          className="flex w-full items-center justify-between px-6 py-3 text-left hover:bg-slate-50"
         >
           <div>
             <h3 className="font-semibold">{gastito.name}</h3>
@@ -376,7 +389,7 @@ function MovementsList() {
             <p>{numberFormatter.format(Number(gastito.amount))}</p>
             <DropdownMenu>
               <DropdownMenuTrigger>
-                <Button variant="ghost">
+                <Button variant="ghost" size="icon">
                   <Ellipsis className="h-4 w-4 text-slate-600" />
                 </Button>
               </DropdownMenuTrigger>
@@ -393,7 +406,7 @@ function MovementsList() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        </button>
+        </div>
       ))}
     </div>
   );
