@@ -48,7 +48,7 @@ export default function Home() {
   );
 }
 
-const numberFormatter = new Intl.NumberFormat("es-AR", {
+export const numberFormatter = new Intl.NumberFormat("es-AR", {
   style: "currency",
   currency: "ARS",
   maximumFractionDigits: 2,

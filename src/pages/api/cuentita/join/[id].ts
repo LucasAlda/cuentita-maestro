@@ -21,7 +21,7 @@ export default async function handler(
   const cuentita = await db.cuentita.findUnique({
     where: { id: id },
     include: {
-      Creator: true,
+      creator: true,
     },
   });
 

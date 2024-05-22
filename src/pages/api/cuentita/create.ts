@@ -14,7 +14,7 @@ const newCuentitaSchema = z.object({
     .max(64, "El nombre debe tener máximo 64 caracteres")
     .regex(
       /^[a-zA-Z0-9\-_.!()?@:/ ]+$/,
-      "el nombre debe ser letras, números o símbolos -_.!()?@:/",
+      "El nombre debe ser letras, números o símbolos -_.!()?@:/",
     ),
   category: z
     .string({

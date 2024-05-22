@@ -14,7 +14,7 @@ export default async function handler(
 
   const cuentitas = await db.cuentita.findMany({
     where: {
-      Member: {
+      member: {
         some: {
           userId: session?.user?.id,
         },
@@ -23,9 +23,39 @@ export default async function handler(
   });
 
   res.json(
-    cuentitas.map((cuentita) => ({
-      ...cuentita,
-      balance: Math.random() * 1000 - 500,
-    })),
+    await Promise.all(
+      cuentitas.map(async (cuentita) => {
+        const shares = await db.share.findMany({
+          where: {
+            gastito: {
+              cuentitaId: cuentita.id,
+            },
+            userId: session.user.id,
+          },
+        });
+
+        const ownedGastitos = await db.gastito.aggregate({
+          where: {
+            ownerId: session.user.id,
+            cuentitaId: cuentita.id,
+          },
+          _sum: {
+            amount: true,
+          },
+        });
+
+        const ownedAmount = Number(ownedGastitos._sum.amount || 0);
+
+        const sharesAmount = shares.reduce(
+          (balance: number, share) => balance + Number(share.amount),
+          0,
+        );
+
+        return {
+          ...cuentita,
+          balance: ownedAmount - sharesAmount,
+        };
+      }),
+    ),
   );
 }

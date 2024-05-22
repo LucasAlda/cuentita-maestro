@@ -19,7 +19,7 @@ export default async function handler(
   const cuentita = await db.cuentita.findUnique({
     where: {
       id: req.query.id,
-      Member: { some: { userId: session?.user?.id } },
+      member: { some: { userId: session?.user?.id } },
     },
   });
 
@@ -28,5 +28,14 @@ export default async function handler(
     return;
   }
 
-  res.json(cuentita);
+  const members = await db.user.findMany({
+    where: {
+      member: { some: { cuentitaId: cuentita.id } },
+    },
+  });
+
+  res.json({
+    ...cuentita,
+    members,
+  });
 }

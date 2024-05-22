@@ -21,7 +21,7 @@ export default async function handler(
   const cuentita = await db.cuentita.findUnique({
     where: { id: id },
     include: {
-      Creator: true,
+      creator: true,
     },
   });
 
@@ -40,7 +40,7 @@ export default async function handler(
   res.json({
     name: cuentita.name,
     category: cuentita.category,
-    createdBy: cuentita.Creator.name,
+    createdBy: cuentita.creator.name,
     alreadyMember: Boolean(membership),
   });
 }
