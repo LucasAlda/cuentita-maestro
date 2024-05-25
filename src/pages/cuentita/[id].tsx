@@ -1,7 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Head from "next/head";
-import { type Gastito, type User, type Cuentita } from "@prisma/client";
+import {
+  type Gastito,
+  type User,
+  type Cuentita,
+  type Share,
+} from "@prisma/client";
 import { useRouter } from "next/router";
 import {
   Card,
@@ -17,6 +22,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -34,15 +40,7 @@ import {
 } from "@/components/ui/select";
 import { useSession } from "next-auth/react";
 import { numberFormatter } from "..";
-import { Ellipsis } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export default function Cuentita() {
@@ -350,6 +348,118 @@ function AddGastitoDialog() {
   );
 }
 
+function Gastito({
+  gastito,
+}: {
+  gastito: Gastito & {
+    owner: User;
+    shares: Share[];
+  };
+}) {
+  const session = useSession();
+  const { data: cuentitaInfo } = useQuery<
+    Cuentita & {
+      members: User[];
+    }
+  >({
+    queryKey: ["/cuentita/info", gastito.cuentitaId],
+  });
+  return (
+    <Dialog>
+      <GastitoTrigger gastito={gastito} />
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{gastito.name}</DialogTitle>
+          <DialogDescription>
+            <span className="capitalize">{gastito.category}</span> -{" "}
+            {format(gastito.createdAt, "dd/MM/yyyy")}
+          </DialogDescription>
+        </DialogHeader>
+        <h3 className="font-bold">Detalle:</h3>
+        <div className="-mt-3 text-sm text-slate-700">
+          <p>Monto: {numberFormatter.format(Number(gastito.amount))}</p>
+          <p>Pagado por: {gastito.owner.name}</p>
+          <p className="capitalize">Recurrencia: {gastito.repetition}</p>
+        </div>
+        <h3 className=" font-bold">Participantes: </h3>
+        <div className="-mt-3 text-sm text-slate-700">
+          {gastito.shares.map((share) => {
+            const member = cuentitaInfo?.members.find((member) => {
+              return member.id === share.userId;
+            });
+            return (
+              <div
+                key={share.id}
+                className={
+                  "flex justify-between" +
+                  (share.userId === session.data?.user.id ? " font-bold" : "")
+                }
+              >
+                <div>{member?.name}</div>
+                <div> {numberFormatter.format(Number(share.amount))}</div>
+              </div>
+            );
+          })}
+        </div>
+        <DialogFooter className="flex pt-2 sm:justify-between">
+          <Button variant={"outline"} size={"icon"} className="hover:bg-red-50">
+            <Trash2 className="h-5 w-5 text-red-500" />
+          </Button>
+          <DialogClose asChild>
+            <Button variant={"outline"}>Cerrar</Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function GastitoTrigger({
+  gastito,
+}: {
+  gastito: Gastito & {
+    owner: User;
+    shares: Share[];
+  };
+}) {
+  const session = useSession();
+  const share = gastito.shares.find(
+    (share) => share.userId === session.data?.user.id,
+  );
+  const isOwner = gastito.ownerId === session.data?.user.id;
+  return (
+    <DialogTrigger asChild>
+      <button
+        key={gastito.id}
+        className="flex w-full items-center justify-between px-6 py-3 text-left hover:bg-slate-50"
+      >
+        <div>
+          <h3 className="font-semibold">{gastito.name}</h3>
+          <p className="text-sm text-slate-500">
+            <span className="capitalize">{gastito.category}</span> - Pagado por{" "}
+            {gastito.owner.name}
+          </p>
+        </div>
+        <div className="flex flex-col items-end">
+          <p>{numberFormatter.format(Number(gastito.amount))}</p>
+          {isOwner ? (
+            <p className="text-sm text-green-600">
+              +
+              {numberFormatter.format(
+                Number(gastito.amount) - Number(share?.amount),
+              )}
+            </p>
+          ) : (
+            <p className="text-sm text-red-500">
+              -{numberFormatter.format(Number(share?.amount))}
+            </p>
+          )}
+        </div>
+      </button>
+    </DialogTrigger>
+  );
+}
+
 function MovementsList() {
   const router = useRouter();
   const cuentitaId = router.query.id as string;
@@ -357,6 +467,7 @@ function MovementsList() {
   const { data: gastitos, isError: gastitosIsError } = useQuery<
     (Gastito & {
       owner: User;
+      shares: Share[];
     })[]
   >({
     queryKey: [`/gastito/list?cuentitaId=${cuentitaId}`],
@@ -374,39 +485,7 @@ function MovementsList() {
         </div>
       )}
       {gastitos.map((gastito) => (
-        <div
-          key={gastito.id}
-          className="flex w-full items-center justify-between px-6 py-3 text-left hover:bg-slate-50"
-        >
-          <div>
-            <h3 className="font-semibold">{gastito.name}</h3>
-            <p className="text-sm text-slate-500">
-              <span className="capitalize">{gastito.category}</span> - Pagado
-              por {gastito.owner.name}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <p>{numberFormatter.format(Number(gastito.amount))}</p>
-            <DropdownMenu>
-              <DropdownMenuTrigger>
-                <Button variant="ghost" size="icon">
-                  <Ellipsis className="h-4 w-4 text-slate-600" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => {
-                    alert("Proximamente...");
-                  }}
-                >
-                  Borrar
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
+        <Gastito gastito={gastito} key={gastito.id} />
       ))}
     </div>
   );

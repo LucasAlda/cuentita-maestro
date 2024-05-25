@@ -19,6 +19,7 @@ export default async function handler(
     },
     include: {
       owner: true,
+      shares: true,
     },
   });
 

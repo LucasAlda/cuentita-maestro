@@ -45,7 +45,7 @@ model Gastito {
 
   cuentitaId String
   cuentita   Cuentita @relation(fields: [cuentitaId], references: [id])
-  Share      Share[]
+  shares      Share[]
 }
 
 model Share {
