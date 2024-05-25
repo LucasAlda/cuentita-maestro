@@ -42,6 +42,8 @@ import { useSession } from "next-auth/react";
 import { numberFormatter } from "..";
 import { Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { requestConfirmation } from "@/lib/request-confirmation";
+import { toast } from "sonner";
 
 export default function Cuentita() {
   const router = useRouter();
@@ -364,8 +366,32 @@ function Gastito({
   >({
     queryKey: ["/cuentita/info", gastito.cuentitaId],
   });
+
+  const [open, setOpen] = useState(false);
+  const ctx = useQueryClient();
+
+  async function handleDelete() {
+    const confirmation = await requestConfirmation({
+      title: "Seguro querés borrar?",
+      description:
+        "Cuidado que no se puede recuperar, pero podés volver a crearlo",
+      action: { variant: "destructive", label: "Borrar" },
+    });
+    if (!confirmation) {
+      return;
+    }
+    fetch("/api/gastito/delete", {
+      method: "POST",
+      body: JSON.stringify({ gastitoId: gastito.id }),
+      headers: { "Content-Type": "application/json" },
+    }).then(() => {
+      toast("Gastito borrado exitosamente!");
+      ctx.invalidateQueries();
+      setOpen(false);
+    });
+  }
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <GastitoTrigger gastito={gastito} />
       <DialogContent className="max-w-sm">
         <DialogHeader>
@@ -402,7 +428,12 @@ function Gastito({
           })}
         </div>
         <DialogFooter className="flex pt-2 sm:justify-between">
-          <Button variant={"outline"} size={"icon"} className="hover:bg-red-50">
+          <Button
+            variant={"outline"}
+            size={"icon"}
+            className="hover:bg-red-50"
+            onClick={handleDelete}
+          >
             <Trash2 className="h-5 w-5 text-red-500" />
           </Button>
           <DialogClose asChild>

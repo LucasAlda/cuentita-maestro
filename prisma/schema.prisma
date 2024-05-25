@@ -52,8 +52,8 @@ model Share {
   id        String  @id @default(cuid())
   user      User    @relation(fields: [userId], references: [id])
   userId    String
-  gastito   Gastito @relation(fields: [gastitoId], references: [id])
-  gastitoId String
+  gastito   Gastito @relation(fields: [gastitoId], references: [id], onDelete: Cascade) 
+  gastitoId String 
   amount    Decimal
 }
 
