@@ -86,12 +86,7 @@ export default function Cuentita() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="secondary"
-                    onClick={() => alert("Proximamente...")}
-                  >
-                    Editar
-                  </Button>
+                  <EditCuentitaDialog />
                   <Button onClick={() => alert("Proximamente...")}>
                     Miembros
                   </Button>
@@ -127,6 +122,169 @@ export default function Cuentita() {
         </CardContent>
       </Card>
     </>
+  );
+}
+
+function EditCuentitaDialog() {
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState("");
+  const [inflation, setInflation] = useState(false);
+  const [response, setResponse] = useState<CreateResponse>();
+  const [open, setOpen] = useState(false);
+  const router = useRouter();
+  const cuentitaId = router.query.id as string;
+
+  const ctx = useQueryClient();
+
+  const { data, isError } = useQuery<Cuentita>({
+    queryKey: ["/cuentita/info", cuentitaId],
+    enabled: typeof cuentitaId === "string",
+  });
+
+  useEffect(() => {
+    if (open) {
+      if (!data || isError) {
+        return;
+      }
+      setName(data?.name);
+      setCategory(data?.category);
+      setInflation(data?.inflation);
+      setResponse(undefined);
+    }
+  }, [open, data, isError]);
+
+  const handleSubmit = () => {
+    fetch("/api/cuentita/edit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cuentitaId, name, category, inflation }),
+    })
+      .then((res) => res.json())
+      .then((data: CreateResponse) => {
+        setResponse(data);
+        if (data?.success) {
+          setOpen(false);
+          ctx.invalidateQueries();
+        }
+      });
+  };
+
+  async function handleDelete() {
+    const confirmation = await requestConfirmation({
+      title: "Seguro querés borrar?",
+      description:
+        "Cuidado que no se puede recuperar, pero podés volver a crearlo",
+      action: { variant: "destructive", label: "Borrar" },
+    });
+    if (!confirmation) {
+      return;
+    }
+    fetch("/api/cuentita/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cuentitaId }),
+    })
+      .then((res) => res.json())
+      .then((data: CreateResponse) => {
+        setResponse(data);
+        if (data?.success) {
+          router.push("/");
+          setOpen(false);
+          ctx.invalidateQueries();
+        }
+      });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline">Editar</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Editar Cuentita</DialogTitle>
+          <DialogDescription>
+            Configure los datos de la cuentita.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="space-y-1">
+            <Label htmlFor="nombre">Nombre</Label>
+            <Input
+              id="nombre"
+              placeholder="Futbol 5 de los domingos"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="categoria" className="text-right">
+              Categoría
+            </Label>
+            <Select
+              value={category}
+              onValueChange={(value) => setCategory(value)}
+            >
+              <SelectTrigger id="categoria" className="col-span-3">
+                <SelectValue placeholder="Selecciona una Categoría" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="evento">Evento</SelectItem>
+                <SelectItem value="familia">Familia</SelectItem>
+                <SelectItem value="amigos">Amigos</SelectItem>
+                <SelectItem value="deporte">Deporte</SelectItem>
+                <SelectItem value="hogar">Hogar</SelectItem>
+                <SelectItem value="viaje">Viaje</SelectItem>
+                <SelectItem value="otro">Otro</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center space-x-2 pt-4">
+            <Checkbox
+              id="terms"
+              checked={inflation}
+              onCheckedChange={(checked) =>
+                checked !== "indeterminate" && setInflation(checked)
+              }
+            />
+            <label
+              htmlFor="terms"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Ajustar por inflación
+            </label>
+            <span className="text-xs text-slate-500">(Proximamente)</span>
+          </div>
+        </div>
+        {response?.success === false && (
+          <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm">
+            <ul className="list-inside list-disc text-red-600">
+              {response.errors.map((error) => (
+                <li key={error}>{error}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        <DialogFooter className="flex pt-2 sm:justify-between">
+          <div>
+            <Button
+              variant={"outline"}
+              size={"icon"}
+              className="hover:bg-red-50"
+              onClick={handleDelete}
+            >
+              <Trash2 className="h-5 w-5 text-red-500" />
+            </Button>
+          </div>
+          <div className="flex gap-1 ">
+            <DialogClose asChild>
+              <Button variant="outline">Cancelar</Button>
+            </DialogClose>
+            <Button onClick={handleSubmit}>Confirmar</Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -344,7 +502,7 @@ function AddGastitoDialog() {
             <Button variant="outline">Cancelar</Button>
           </DialogClose>
           <Button onClick={handleSubmit}>Crear</Button>
-        </DialogFooter>{" "}
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
