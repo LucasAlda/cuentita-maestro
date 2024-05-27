@@ -40,10 +40,11 @@ import {
 } from "@/components/ui/select";
 import { useSession } from "next-auth/react";
 import { numberFormatter } from "..";
-import { Trash2 } from "lucide-react";
+import { Copy, Trash2, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { requestConfirmation } from "@/lib/request-confirmation";
 import { toast } from "sonner";
+import { env } from "@/env";
 
 export default function Cuentita() {
   const router = useRouter();
@@ -54,24 +55,25 @@ export default function Cuentita() {
     enabled: typeof id === "string",
   });
 
+  if (isError) {
+    return (
+      <Card className="mx-auto mt-10 w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Cuentita no encontrada!</CardTitle>
+          <CardDescription>
+            Esta cuentita no existe o no eres miembro de ella.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   return (
     <>
       <Head>
         <title>Cuentita Maestro</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-
-      {isError ? (
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Cuentita no encontrada!</CardTitle>
-            <CardDescription>
-              Esta cuentita no existe o no eres miembro de ella.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      ) : null}
-
       <Card className="mx-auto mt-10 w-full max-w-2xl">
         <CardContent className="p-6">
           {data ? (
@@ -87,9 +89,7 @@ export default function Cuentita() {
                 </div>
                 <div className="flex items-center gap-2">
                   <EditCuentitaDialog />
-                  <Button onClick={() => alert("Proximamente...")}>
-                    Miembros
-                  </Button>
+                  <EditMembersDialog />
                 </div>
               </div>
 
@@ -122,6 +122,117 @@ export default function Cuentita() {
         </CardContent>
       </Card>
     </>
+  );
+}
+
+function EditMembersDialog() {
+  const [open, setOpen] = useState(false);
+  const [response, setResponse] = useState<CreateResponse>();
+  const router = useRouter();
+  const cuentitaId = router.query.id as string;
+
+  const invitationLink = `${window.location.origin}/invite/${cuentitaId}`;
+
+  function copy() {
+    navigator.clipboard.writeText(invitationLink);
+    toast("Link copiado al portapapeles!");
+  }
+
+  const ctx = useQueryClient();
+
+  const { data: cuentitaInfo } = useQuery<
+    Cuentita & {
+      members: User[];
+    }
+  >({
+    queryKey: ["/cuentita/info", cuentitaId],
+    enabled: typeof cuentitaId === "string",
+  });
+
+  async function handleDelete(memberId: string) {
+    const confirmation = await requestConfirmation({
+      title: "Seguro querés borrar a este miembro?",
+      description:
+        "Podes mandarle el link de invitación para que vuelva a unirse.",
+      action: { variant: "destructive", label: "Borrar" },
+    });
+    if (!confirmation) {
+      return;
+    }
+    fetch("/api/cuentita/kick/" + memberId, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cuentitaId }),
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          throw await res.json();
+        }
+        return res.json();
+      })
+      .then((data: CreateResponse) => {
+        if (data?.success) {
+          toast("Miembro eliminado exitosamente!");
+          ctx.invalidateQueries();
+        }
+      })
+      .catch((error) => {
+        toast.error(error.message as string);
+      });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="default">Miembros</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Editar Miembros de la Cuentita</DialogTitle>
+          <DialogDescription>
+            Utilize el enlace para invitar a mas miembros o seleccione abajo
+            para eliminar a un miembro ya existente.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="space-y-1">
+            <h3 className="font-semibold">Enlace de Invitacion</h3>
+            <div className="flex gap-1">
+              <Input id="Link" value={invitationLink} readOnly />
+              <Button size={"icon"} variant="outline" onClick={copy}>
+                <Copy className="h-4 w-4 text-slate-600" />
+              </Button>
+            </div>
+          </div>
+          <div className="pt-4">
+            <h3 className="font-semibold">Miembros</h3>
+            {cuentitaInfo?.members.map((user) => {
+              return (
+                <div
+                  key={user.id}
+                  className="flex items-center justify-between gap-2 rounded-md hover:bg-slate-100"
+                >
+                  <p className="pl-2 text-sm">{user.name}</p>
+                  <Button
+                    size={"icon"}
+                    variant="ghost"
+                    className="hover:bg-red-100"
+                    onClick={() => handleDelete(user.id)}
+                  >
+                    <X className="h-5 w-5 text-red-500" />
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <DialogFooter className="flex pt-2 sm:justify-end">
+          <DialogClose asChild>
+            <Button variant="outline">Cancelar</Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
