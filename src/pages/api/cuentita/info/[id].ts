@@ -1,3 +1,4 @@
+import { calculateBalance } from "@/lib/calculate-balance";
 import { getServerAuthSession } from "@/server/auth";
 import { db } from "@/server/db";
 import type { NextApiRequest, NextApiResponse } from "next";
@@ -34,8 +35,25 @@ export default async function handler(
     },
   });
 
+  const users = await db.user.findMany({
+    where: {
+      member: {
+        some: {
+          cuentitaId: cuentita.id,
+        },
+      },
+    },
+  });
+
+  const usersWithBalances = await Promise.all(
+    users.map(async (user) => {
+      return { ...user, balance: await calculateBalance(user.id, cuentita.id) };
+    }),
+  );
+
   res.json({
     ...cuentita,
     members,
+    users: usersWithBalances,
   });
 }

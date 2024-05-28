@@ -44,7 +44,6 @@ import { Copy, Trash2, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { requestConfirmation } from "@/lib/request-confirmation";
 import { toast } from "sonner";
-import { env } from "@/env";
 
 export default function Cuentita() {
   const router = useRouter();
@@ -792,9 +791,31 @@ function MovementsList() {
 }
 
 function Balances() {
+  const router = useRouter();
+  const cuentitaId = router.query.id as string;
+  const { data } = useQuery<
+    Cuentita & { users: (User & { balance: number })[] }
+  >({
+    queryKey: ["/cuentita/info", cuentitaId],
+  });
+
   return (
-    <div className="flex min-h-32 items-center justify-center text-center italic">
-      Balances (Proximamente)
+    <div className="flex min-h-32 flex-col items-center justify-center text-center">
+      {data?.users?.map((user) => {
+        return (
+          <div
+            className="flex w-full items-center justify-between px-6 py-3 text-left"
+            key={user.id}
+          >
+            <p className="font-semibold">{user.name}:</p>
+            <p
+              className={user.balance >= 0 ? "text-green-600" : "text-red-600"}
+            >
+              {numberFormatter.format(user.balance)}
+            </p>
+          </div>
+        );
+      })}
     </div>
   );
 }
