@@ -726,6 +726,26 @@ function GastitoTrigger({
     (share) => share.userId === session.data?.user.id,
   );
   const isOwner = gastito.ownerId === session.data?.user.id;
+
+  let shareTag
+
+  if (share == undefined) {
+    shareTag = <></>
+  }
+  else if (isOwner) {
+    shareTag =
+      <p className="text-sm text-green-600">
+        +
+        {numberFormatter.format(
+          Number(gastito.amount) - Number(share?.amount),
+        )}
+      </p>
+  } else {
+    shareTag = <p className="text-sm text-red-500">
+      -{numberFormatter.format(Number(share?.amount))}
+    </p>
+  }
+
   return (
     <DialogTrigger asChild>
       <button
@@ -741,18 +761,7 @@ function GastitoTrigger({
         </div>
         <div className="flex flex-col items-end">
           <p>{numberFormatter.format(Number(gastito.amount))}</p>
-          {isOwner ? (
-            <p className="text-sm text-green-600">
-              +
-              {numberFormatter.format(
-                Number(gastito.amount) - Number(share?.amount),
-              )}
-            </p>
-          ) : (
-            <p className="text-sm text-red-500">
-              -{numberFormatter.format(Number(share?.amount))}
-            </p>
-          )}
+          {shareTag}
         </div>
       </button>
     </DialogTrigger>
