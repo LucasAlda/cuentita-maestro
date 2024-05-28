@@ -19,7 +19,7 @@ const menuItems = [
     link: "/",
   },
   {
-    label: "Mis Gastitos",
+    label: "Gastitos",
     link: "/gastitos",
   },
 ];

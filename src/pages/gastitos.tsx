@@ -19,8 +19,8 @@ export default function Page() {
   }
 
   return (
-    <div className=" space-y-2 p-10">
-      <h1 className="text-3xl font-bold text-slate-800">Mis Gastitos</h1>
+    <div className="mx-auto w-full max-w-xl space-y-4 py-10">
+      <h1 className="pl-1 text-2xl font-bold text-slate-800">Mis gastitos!</h1>
       <div className="divide-y divide-slate-200/70 rounded-lg bg-white shadow-md shadow-slate-200">
         {data.length === 0 && (
           <div className="py-12 text-center text-sm italic text-slate-500">
