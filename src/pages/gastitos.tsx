@@ -36,26 +36,17 @@ export default function Page() {
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-semibold">{share.gastito?.name}</h2>
 
-                <p className="inline-flex rounded-full px-2 text-sm bg-slate-200 text-slate-800">
+                <p className="inline-flex rounded-full bg-slate-200 px-2 text-sm text-slate-800">
                   {share.name}
                 </p>
               </div>
-              <p className="pl-2 text-sm capitalize text-slate-600">
+              <p className="text-sm capitalize text-slate-600">
                 {share.gastito?.category}
               </p>
             </div>
-            <div>
-              <p
-                className={
-                  share.gastito.ownerId === session.data?.user.id
-                    ? " text-green-600"
-                    : " text-red-600"
-                }
-              >
-                {numberFormatter.format(Number(share.amount))}
-              </p>
+            <div className="flex flex-col items-end">
+              <p>{numberFormatter.format(Number(share.amount))}</p>
               <p className=" items-center text-sm font-normal text-slate-500">
-                {" "}
                 {format(new Date(share.gastito?.createdAt), "dd/MM/yyyy")}
               </p>
             </div>

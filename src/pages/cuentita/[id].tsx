@@ -727,23 +727,23 @@ function GastitoTrigger({
   );
   const isOwner = gastito.ownerId === session.data?.user.id;
 
-  let shareTag
+  let shareTag;
 
   if (share == undefined) {
-    shareTag = <></>
-  }
-  else if (isOwner) {
-    shareTag =
+    shareTag = <></>;
+  } else if (isOwner) {
+    shareTag = (
       <p className="text-sm text-green-600">
         +
-        {numberFormatter.format(
-          Number(gastito.amount) - Number(share?.amount),
-        )}
+        {numberFormatter.format(Number(gastito.amount) - Number(share?.amount))}
       </p>
+    );
   } else {
-    shareTag = <p className="text-sm text-red-500">
-      -{numberFormatter.format(Number(share?.amount))}
-    </p>
+    shareTag = (
+      <p className="text-sm text-red-500">
+        -{numberFormatter.format(Number(share?.amount))}
+      </p>
+    );
   }
 
   return (
