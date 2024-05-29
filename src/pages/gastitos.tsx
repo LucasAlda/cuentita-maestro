@@ -33,11 +33,13 @@ export default function Page() {
             className="flex w-full items-center justify-between px-6 py-3"
           >
             <div>
-              <h2 className="text-lg font-semibold">{share.gastito?.name}</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold">{share.gastito?.name}</h2>
 
-              <p className="pl-2 text-sm text-slate-600">
-                De la cuentita: {share.name}
-              </p>
+                <p className="inline-flex rounded-full px-2 text-sm bg-slate-200 text-slate-800">
+                  {share.name}
+                </p>
+              </div>
               <p className="pl-2 text-sm capitalize text-slate-600">
                 {share.gastito?.category}
               </p>
