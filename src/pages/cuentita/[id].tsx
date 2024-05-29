@@ -28,7 +28,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -126,7 +126,6 @@ export default function Cuentita() {
 
 function EditMembersDialog() {
   const [open, setOpen] = useState(false);
-  const [response, setResponse] = useState<CreateResponse>();
   const router = useRouter();
   const cuentitaId = router.query.id as string;
 
@@ -661,7 +660,7 @@ function Gastito({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <GastitoTrigger gastito={gastito} />
-      <DialogContent className="max-w-sm">
+      <DialogContent className="max-w-sm gap-5">
         <DialogHeader>
           <DialogTitle>{gastito.name}</DialogTitle>
           <DialogDescription>
@@ -669,14 +668,14 @@ function Gastito({
             {format(gastito.createdAt, "dd/MM/yyyy")}
           </DialogDescription>
         </DialogHeader>
-        <h3 className="font-bold">Detalle:</h3>
-        <div className="-mt-3 text-sm text-slate-700">
+        <h3 className="font-bold">Detalle</h3>
+        <div className="-mt-3 space-y-0.5 text-sm text-slate-700">
           <p>Monto: {numberFormatter.format(Number(gastito.amount))}</p>
           <p>Pagado por: {gastito.owner.name}</p>
           <p className="capitalize">Recurrencia: {gastito.repetition}</p>
         </div>
-        <h3 className=" font-bold">Participantes: </h3>
-        <div className="-mt-3 text-sm text-slate-700">
+        <h3 className=" font-bold">Participantes </h3>
+        <div className="-mt-3 space-y-0.5 text-sm text-slate-700">
           {gastito.shares.map((share) => {
             const member = cuentitaInfo?.members.find((member) => {
               return member.id === share.userId;
@@ -808,21 +807,43 @@ function Balances() {
     queryKey: ["/cuentita/info", cuentitaId],
   });
 
+  const maxBalance = data
+    ? Math.max(...data.users.map((u) => Math.abs(u.balance))) || 1000
+    : 1000;
+
   return (
-    <div className="flex min-h-32 flex-col items-center justify-center text-center">
-      {data?.users?.map((user) => {
+    <div className="grid grid-cols-2 gap-y-2">
+      {data?.users.map((user) => {
+        const percentage = (Math.abs(user.balance) / maxBalance) * 100;
+
+        if (user.balance >= 0) {
+          return (
+            <React.Fragment key={user.id}>
+              <div className="self-center justify-self-end pr-2 text-sm">
+                {user.name}
+              </div>
+              <div
+                style={{ width: `${percentage}%` }}
+                className={`self-center justify-self-start rounded px-2 py-1 text-sm ${user.balance > 0 ? "bg-green-400" : "bg-slate-300"}`}
+              >
+                {numberFormatter.format(user.balance)}
+              </div>
+            </React.Fragment>
+          );
+        }
+
         return (
-          <div
-            className="flex w-full items-center justify-between px-6 py-3 text-left"
-            key={user.id}
-          >
-            <p className="font-semibold">{user.name}:</p>
-            <p
-              className={user.balance >= 0 ? "text-green-600" : "text-red-600"}
+          <React.Fragment key={user.id}>
+            <div
+              style={{ width: `${percentage}%` }}
+              className="flex justify-end self-center justify-self-end rounded bg-red-400 px-2 py-1 text-right text-sm"
             >
               {numberFormatter.format(user.balance)}
-            </p>
-          </div>
+            </div>
+            <div className="self-center justify-self-start pl-2 text-sm">
+              {user.name}
+            </div>
+          </React.Fragment>
         );
       })}
     </div>

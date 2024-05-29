@@ -1,13 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight } from "lucide-react";
-import { useSession } from "next-auth/react";
-import Link from "next/link";
 import type { Gastito, Share } from "@prisma/client";
 import { numberFormatter } from ".";
 import { format } from "date-fns";
+import Link from "next/link";
 
 export default function Page() {
-  const session = useSession();
   const { data, isError } = useQuery<
     (Share & { gastito: Gastito } & { name: string })[]
   >({
@@ -28,9 +25,10 @@ export default function Page() {
           </div>
         )}
         {data.map((share) => (
-          <div
+          <Link
             key={share.id}
-            className="flex w-full items-center justify-between px-6 py-3"
+            href={`/cuentita/${share.gastito.cuentitaId}`}
+            className="flex w-full items-center justify-between px-6 py-3 hover:bg-slate-50"
           >
             <div>
               <div className="flex items-center gap-2">
@@ -44,13 +42,13 @@ export default function Page() {
                 {share.gastito?.category}
               </p>
             </div>
-            <div className="flex flex-col items-end">
-              <p>{numberFormatter.format(Number(share.amount))}</p>
+            <div className="flex flex-col items-end text-red-500">
+              <p>{numberFormatter.format(-Number(share.amount))}</p>
               <p className=" items-center text-sm font-normal text-slate-500">
                 {format(new Date(share.gastito?.createdAt), "dd/MM/yyyy")}
               </p>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
