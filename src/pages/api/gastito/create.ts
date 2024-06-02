@@ -12,7 +12,7 @@ const newGastitoSchema = z.object({
     .min(3, "El nombre debe tener mínimo 3 caracteres")
     .max(64, "El nombre debe tener máximo 64 caracteres")
     .regex(
-      /^[a-zA-Z0-9\-_.!()?@:/ ]+$/,
+      /^[a-zA-ZÀ-ÖØ-öø-ÿ0-9\-_.!()?@:/ ]+$/,
       "El nombre debe ser letras, números o símbolos -_.!()?@:/",
     ),
   amount: z
