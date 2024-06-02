@@ -44,6 +44,7 @@ import { Copy, Trash2, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { requestConfirmation } from "@/lib/request-confirmation";
 import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function Cuentita() {
   const router = useRouter();
@@ -106,7 +107,7 @@ export default function Cuentita() {
                     <AddGastitoDialog />
                   </TabsContent>
                   <TabsContent value="balances">
-                    <Button variant="outline">Saldar Deuda</Button>
+                    <PayDebtDialog />
                   </TabsContent>
                 </div>
                 <TabsContent value="movements">
@@ -721,9 +722,8 @@ function Gastito({
                 </DialogHeader>
                 <div>
                   <Label htmlFor="descripcion">Descripción</Label>
-                  <Input
+                  <Textarea
                     id="descripcion"
-                    placeholder="Futbol 5 de los domingos"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                   />
@@ -781,6 +781,8 @@ function GastitoTrigger({
     );
   }
 
+  const isPago = gastito.category === "pago";
+
   return (
     <DialogTrigger asChild>
       <button
@@ -790,8 +792,12 @@ function GastitoTrigger({
         <div>
           <h3 className="font-semibold">{gastito.name}</h3>
           <p className="text-sm text-slate-500">
-            <span className="capitalize">{gastito.category}</span> - Pagado por{" "}
-            {gastito.owner.name}
+            <span
+              className={`inline-flex rounded-full ${isPago ? "bg-indigo-200" : "bg-slate-200"} px-2 text-sm capitalize text-slate-800`}
+            >
+              {gastito.category}
+            </span>{" "}
+            - Pagado por {gastito.owner.name}
           </p>
         </div>
         <div className="flex flex-col items-end">
@@ -872,7 +878,7 @@ function Balances() {
           <React.Fragment key={user.id}>
             <div
               style={{ width: `${percentage}%` }}
-              className="flex justify-end self-center justify-self-end rounded bg-red-400 px-2 py-1 text-right text-sm"
+              className="flex justify-end self-center justify-self-end whitespace-nowrap rounded bg-red-400 px-2 py-1 text-right text-sm"
             >
               {numberFormatter.format(user.balance)}
             </div>
@@ -883,5 +889,114 @@ function Balances() {
         );
       })}
     </div>
+  );
+}
+
+function PayDebtDialog() {
+  const router = useRouter();
+  const cuentitaId = router.query.id as string;
+  const ownerId = useSession().data?.user.id!;
+
+  const [open, setOpen] = useState(false);
+  const [target, setTarget] = useState<string>("");
+  const [amount, setAmount] = useState(0);
+
+  const ctx = useQueryClient();
+
+  const { data: cuentitaInfo } = useQuery<
+    Cuentita & {
+      members: User[];
+    }
+  >({
+    queryKey: ["/cuentita/info", cuentitaId],
+    enabled: typeof cuentitaId === "string",
+  });
+
+  const handleSubmit = () => {
+    const category = "pago";
+    const repetition = "unico";
+
+    const shares: Shares = {};
+    shares[target] = 1;
+
+    const targetUser = cuentitaInfo?.members.find((user) => user.id === target);
+    const name = `Pago a ${targetUser?.name}`;
+
+    fetch("/api/gastito/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        cuentitaId,
+        name,
+        category,
+        amount,
+        repetition,
+        ownerId,
+        shares,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data: CreateResponse) => {
+        if (data?.success) {
+          setOpen(false);
+          ctx.invalidateQueries();
+        }
+      });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline">Saldar deuda</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Saldar deuda</DialogTitle>
+          <DialogDescription>
+            Marcá a quién le pagaste y cuánto
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-1">
+          <Label htmlFor="usuario" className="text-right">
+            Usuario a pagar
+          </Label>
+          <Select value={target} onValueChange={(value) => setTarget(value)}>
+            <SelectTrigger id="usuario" className="col-span-3">
+              <SelectValue placeholder="Selecciona a quien le pagaste" />
+            </SelectTrigger>
+            <SelectContent>
+              {cuentitaInfo?.members
+                .filter((user) => {
+                  return user.id !== ownerId;
+                })
+                .map((user) => {
+                  return (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.name}
+                    </SelectItem>
+                  );
+                })}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1">
+          <Label htmlFor="monto">Monto</Label>
+          <Input
+            id="monto"
+            value={amount}
+            type="number"
+            onChange={(e) => setAmount(e.target.valueAsNumber)}
+          />
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline">Cancelar</Button>
+          </DialogClose>
+          <Button onClick={handleSubmit}>Confirmar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
