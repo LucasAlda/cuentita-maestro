@@ -635,6 +635,8 @@ function Gastito({
   });
 
   const [open, setOpen] = useState(false);
+  const [openComplain, setOpenComplain] = useState(false);
+  const [description, setDescription] = useState("");
   const ctx = useQueryClient();
 
   async function handleDelete() {
@@ -657,6 +659,7 @@ function Gastito({
       setOpen(false);
     });
   }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <GastitoTrigger gastito={gastito} />
@@ -695,17 +698,50 @@ function Gastito({
           })}
         </div>
         <DialogFooter className="flex pt-2 sm:justify-between">
-          <Button
-            variant={"outline"}
-            size={"icon"}
-            className="hover:bg-red-50"
-            onClick={handleDelete}
-          >
-            <Trash2 className="h-5 w-5 text-red-500" />
-          </Button>
-          <DialogClose asChild>
-            <Button variant={"outline"}>Cerrar</Button>
-          </DialogClose>
+          <div className="flex gap-2">
+            <Button
+              variant={"outline"}
+              size={"icon"}
+              className="hover:bg-red-50"
+              onClick={handleDelete}
+            >
+              <Trash2 className="h-5 w-5 text-red-500" />
+            </Button>
+            <Dialog open={openComplain} onOpenChange={setOpenComplain}>
+              <DialogTrigger asChild>
+                <Button variant="default">Reclamar</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Iniciar reclamo</DialogTitle>
+                  <DialogDescription>
+                    Escribí una breve descripción de tu reclamo. Se notificará a
+                    todos los miembros del grupo.
+                  </DialogDescription>
+                </DialogHeader>
+                <div>
+                  <Label htmlFor="descripcion">Descripción</Label>
+                  <Input
+                    id="descripcion"
+                    placeholder="Futbol 5 de los domingos"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                  />
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant={"outline"}>Cerrar</Button>
+                  </DialogClose>
+                  <Button variant={"default"}>Enviar</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+          <div>
+            <DialogClose asChild>
+              <Button variant={"outline"}>Cerrar</Button>
+            </DialogClose>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
