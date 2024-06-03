@@ -16,7 +16,7 @@ export default function Page() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-xl space-y-4 py-10">
+    <div className="mx-auto w-full max-w-xl space-y-4 px-4 py-10 sm:px-0">
       <h1 className="pl-1 text-2xl font-bold text-slate-800">Mis gastitos!</h1>
       <div className="divide-y divide-slate-200/70 rounded-lg bg-white shadow-md shadow-slate-200">
         {data.length === 0 && (
@@ -31,14 +31,14 @@ export default function Page() {
             className="flex w-full items-center justify-between px-6 py-3 hover:bg-slate-50"
           >
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col items-start gap-x-2 sm:flex-row sm:items-center">
                 <h2 className="text-lg font-semibold">{share.gastito?.name}</h2>
 
                 <p className="inline-flex rounded-full bg-slate-200 px-2 text-sm text-slate-800">
                   {share.name}
                 </p>
               </div>
-              <p className="text-sm capitalize text-slate-600">
+              <p className="mt-1 text-sm capitalize text-slate-600 sm:mt-0">
                 {share.gastito?.category}
               </p>
             </div>

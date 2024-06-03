@@ -15,6 +15,11 @@ export default async function handler(
   const shares = await db.share.findMany({
     where: {
       userId: session?.user?.id,
+      gastito: {
+        NOT: {
+          category: "pago",
+        },
+      },
     },
     include: {
       gastito: true,

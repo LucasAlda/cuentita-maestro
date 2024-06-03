@@ -75,7 +75,7 @@ export default function Cuentita() {
         <title>Cuentita Maestro</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <Card className="mx-auto mt-10 w-full max-w-2xl">
+      <Card className="mx-auto w-full max-w-2xl max-sm:rounded-none max-sm:border-0 sm:mt-10">
         <CardContent className="p-6">
           {data ? (
             <>
@@ -88,14 +88,14 @@ export default function Cuentita() {
                     {data.inflation ? " - Ajustado por inflación" : null}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2">
                   <EditCuentitaDialog />
                   <EditMembersDialog />
                 </div>
               </div>
 
               <Tabs defaultValue="movements">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-x-2">
                   <TabsList className="h-10">
                     <TabsTrigger value="movements" className="h-8">
                       Movimientos
@@ -104,10 +104,10 @@ export default function Cuentita() {
                       Balances
                     </TabsTrigger>
                   </TabsList>
-                  <TabsContent value="movements">
+                  <TabsContent value="movements" className="mt-0">
                     <AddGastitoDialog />
                   </TabsContent>
-                  <TabsContent value="balances">
+                  <TabsContent value="balances" className="mt-0">
                     <PayDebtDialog />
                   </TabsContent>
                 </div>
@@ -184,7 +184,9 @@ function EditMembersDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="default">Miembros</Button>
+        <Button variant="default" className="max-sm:px-3 max-sm:py-1.5">
+          Miembros
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -309,7 +311,9 @@ function EditCuentitaDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">Editar</Button>
+        <Button variant="outline" className="max-sm:px-3 max-sm:py-1.5">
+          Editar
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -483,7 +487,10 @@ function AddGastitoDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">+ Agregar gastito</Button>
+        <Button variant="outline" className="">
+          <span className="hidden sm:inline">+ Agregar gastito</span>
+          <span className="sm:hidden">+ gastito</span>
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -849,6 +856,7 @@ function MovementsList() {
     })[]
   >({
     queryKey: [`/gastito/list?cuentitaId=${cuentitaId}`],
+    refetchInterval: 5 * 1000,
   });
 
   if (!gastitos || gastitosIsError) {
@@ -876,6 +884,7 @@ function Balances() {
     Cuentita & { users: (User & { balance: number })[] }
   >({
     queryKey: ["/cuentita/info", cuentitaId],
+    refetchInterval: 5 * 1000,
   });
 
   const maxBalance = data
@@ -934,16 +943,16 @@ function PayDebtDialog() {
   const [MPSimulation, setMPSimulation] = useState(false);
 
   useEffect(() => {
-    if (!open){
+    if (!open) {
       setTimeout(() => {
         setTarget("");
         setAmount(0);
         setResponse(undefined);
         setPayWithMP(false);
         setMPSimulation(false);
-      },300)
+      }, 300);
     }
-  }, [open]); 
+  }, [open]);
 
   const ctx = useQueryClient();
 
@@ -961,7 +970,7 @@ function PayDebtDialog() {
     const repetition = "unico";
 
     const shares: Shares = {};
-    if (target !== ""){
+    if (target !== "") {
       shares[target] = 1;
     }
 
@@ -988,8 +997,7 @@ function PayDebtDialog() {
           ctx.invalidateQueries();
           if (!payWithMP) {
             setOpen(false);
-          }
-          else {
+          } else {
             setMPSimulation(true);
           }
         }
@@ -998,105 +1006,107 @@ function PayDebtDialog() {
 
   // const MPSimulation = response?.success && open //true
 
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline">Saldar deuda</Button>
       </DialogTrigger>
       <DialogContent>
-        {
-          MPSimulation ?  
-            <div className="text-center">
-              <img
+        {MPSimulation ? (
+          <div className="text-center">
+            <img
               className="mx-auto w-36"
               alt="mercadopago"
               src="https://logospng.org/download/mercado-pago/logo-mercado-pago-icone-1024.png"
-              />
-              <p className="text-slate-700 mt-4">Procesando transacción...</p>
-              <LoaderCircle className="text-slate-700 animate-spin mx-auto my-3 w-8 h-8"/>
-              <Button className="bg-[#00b5ec] text-[#1e2d6d] hover:bg-[#00b5ec7a] mt-8" onClick={()=> setOpen(false)}>
-                Confirmar pago
-                
-              </Button>
-
-            </div>
-            : <>
-        <DialogHeader>
-          <DialogTitle>Saldar deuda</DialogTitle>
-          <DialogDescription>
-            Marcá a quién le pagaste y cuánto
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-1">
-          <Label htmlFor="usuario" className="text-right">
-            Usuario a pagar
-          </Label>
-          <Select value={target} onValueChange={(value) => setTarget(value)}>
-            <SelectTrigger id="usuario" className="col-span-3">
-              <SelectValue placeholder="Selecciona a quien le pagaste" />
-            </SelectTrigger>
-            <SelectContent>
-              {cuentitaInfo?.members
-                .filter((user) => {
-                  return user.id !== ownerId;
-                })
-                .map((user) => {
-                  return (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.name}
-                    </SelectItem>
-                  );
-                })}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-1">
-          <Label htmlFor="monto">Monto</Label>
-          <Input
-            id="monto"
-            value={amount}
-            type="number"
-            onChange={(e) => setAmount(e.target.valueAsNumber)}
             />
-        </div>
-        <div className="mt-2 flex items-center gap-2">
-          <Checkbox
-            checked={payWithMP}
-            onCheckedChange={(checked) =>
-              checked !== "indeterminate" && setPayWithMP(checked)
-            }
-            />
-          <label>
-            Pagar con{""}
-            <img
-              className="ml-0.5 inline w-10"
-              alt="mercadopago"
-              src="https://logospng.org/download/mercado-pago/logo-mercado-pago-icone-1024.png"
-            />
-
-          </label>
-        </div>
-          
-        {response?.success === false && (
-          <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm">
-            <ul className="list-inside list-disc text-red-600">
-              {response.errors.map((error) => (
-                <li key={error}>{error}</li>
-              ))}
-            </ul>
+            <p className="mt-4 text-slate-700">Procesando transacción...</p>
+            <LoaderCircle className="mx-auto my-3 h-8 w-8 animate-spin text-slate-700" />
+            <Button
+              className="mt-8 bg-[#00b5ec] text-[#1e2d6d] hover:bg-[#00b5ec7a]"
+              onClick={() => setOpen(false)}
+            >
+              Confirmar pago
+            </Button>
           </div>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle>Saldar deuda</DialogTitle>
+              <DialogDescription>
+                Marcá a quién le pagaste y cuánto
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-1">
+              <Label htmlFor="usuario" className="text-right">
+                Usuario a pagar
+              </Label>
+              <Select
+                value={target}
+                onValueChange={(value) => setTarget(value)}
+              >
+                <SelectTrigger id="usuario" className="col-span-3">
+                  <SelectValue placeholder="Selecciona a quien le pagaste" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cuentitaInfo?.members
+                    .filter((user) => {
+                      return user.id !== ownerId;
+                    })
+                    .map((user) => {
+                      return (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.name}
+                        </SelectItem>
+                      );
+                    })}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="monto">Monto</Label>
+              <Input
+                id="monto"
+                value={amount}
+                type="number"
+                onChange={(e) => setAmount(e.target.valueAsNumber)}
+              />
+            </div>
+            <div className="mt-2 flex items-center gap-2">
+              <Checkbox
+                checked={payWithMP}
+                onCheckedChange={(checked) =>
+                  checked !== "indeterminate" && setPayWithMP(checked)
+                }
+              />
+              <label>
+                Pagar con{""}
+                <img
+                  className="ml-0.5 inline w-10"
+                  alt="mercadopago"
+                  src="https://logospng.org/download/mercado-pago/logo-mercado-pago-icone-1024.png"
+                />
+              </label>
+            </div>
+
+            {response?.success === false && (
+              <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm">
+                <ul className="list-inside list-disc text-red-600">
+                  {response.errors.map((error) => (
+                    <li key={error}>{error}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">Cancelar</Button>
+              </DialogClose>
+              <Button onClick={handleSubmit}>Confirmar</Button>
+            </DialogFooter>
+          </>
         )}
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">Cancelar</Button>
-          </DialogClose>
-          <Button onClick={handleSubmit}>Confirmar</Button>
-        </DialogFooter>
-      </>
-    }
       </DialogContent>
     </Dialog>
   );

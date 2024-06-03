@@ -35,7 +35,7 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className="mx-auto w-full max-w-xl space-y-4 py-10">
+      <main className="mx-auto w-full max-w-xl space-y-4 px-4 py-10 sm:px-0">
         <div className="flex items-center justify-between">
           <h1 className="pl-1 text-2xl font-bold text-slate-800">
             Mis cuentitas!
