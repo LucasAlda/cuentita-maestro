@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Head from "next/head";
@@ -15,7 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { format } from "date-fns";
+import { format, set } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -40,7 +41,7 @@ import {
 } from "@/components/ui/select";
 import { useSession } from "next-auth/react";
 import { numberFormatter } from "..";
-import { Copy, Trash2, X } from "lucide-react";
+import { Copy, LoaderCircle, Trash2, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { requestConfirmation } from "@/lib/request-confirmation";
 import { toast } from "sonner";
@@ -189,13 +190,13 @@ function EditMembersDialog() {
         <DialogHeader>
           <DialogTitle>Editar Miembros de la Cuentita</DialogTitle>
           <DialogDescription>
-            Utilize el enlace para invitar a mas miembros o seleccione abajo
+            Utilice el enlace para invitar a más miembros o seleccione abajo
             para eliminar a un miembro ya existente.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="space-y-1">
-            <h3 className="font-semibold">Enlace de Invitacion</h3>
+            <h3 className="font-semibold">Enlace de Invitación</h3>
             <div className="flex gap-1">
               <Input id="Link" value={invitationLink} readOnly />
               <Button size={"icon"} variant="outline" onClick={copy}>
@@ -363,7 +364,7 @@ function EditCuentitaDialog() {
             >
               Ajustar por inflación
             </label>
-            <span className="text-xs text-slate-500">(Proximamente)</span>
+            <span className="text-xs text-slate-500">(Próximamente)</span>
           </div>
         </div>
         {response?.success === false && (
@@ -526,6 +527,7 @@ function AddGastitoDialog() {
                 <SelectItem value="gasolina">Gasolina</SelectItem>
                 <SelectItem value="viaje">Viaje</SelectItem>
                 <SelectItem value="salida">Salida</SelectItem>
+                <SelectItem value="deporte">Deporte</SelectItem>
                 <SelectItem value="entretenimiento">Entretenimiento</SelectItem>
               </SelectContent>
             </Select>
@@ -542,7 +544,7 @@ function AddGastitoDialog() {
                 <SelectValue placeholder="Recurrencia" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="unico">Unico</SelectItem>
+                <SelectItem value="unico">Único</SelectItem>
                 <SelectItem value="semanal">Semanal</SelectItem>
                 <SelectItem value="mensual">Mensual</SelectItem>
                 <SelectItem value="trimestral">Trimestral</SelectItem>
@@ -927,6 +929,21 @@ function PayDebtDialog() {
   const [open, setOpen] = useState(false);
   const [target, setTarget] = useState<string>("");
   const [amount, setAmount] = useState(0);
+  const [payWithMP, setPayWithMP] = useState(false);
+  const [response, setResponse] = useState<CreateResponse>();
+  const [MPSimulation, setMPSimulation] = useState(false);
+
+  useEffect(() => {
+    if (!open){
+      setTimeout(() => {
+        setTarget("");
+        setAmount(0);
+        setResponse(undefined);
+        setPayWithMP(false);
+        setMPSimulation(false);
+      },300)
+    }
+  }, [open]); 
 
   const ctx = useQueryClient();
 
@@ -944,7 +961,9 @@ function PayDebtDialog() {
     const repetition = "unico";
 
     const shares: Shares = {};
-    shares[target] = 1;
+    if (target !== ""){
+      shares[target] = 1;
+    }
 
     const targetUser = cuentitaInfo?.members.find((user) => user.id === target);
     const name = `Pago a ${targetUser?.name}`;
@@ -964,12 +983,21 @@ function PayDebtDialog() {
     })
       .then((res) => res.json())
       .then((data: CreateResponse) => {
+        setResponse(data);
         if (data?.success) {
-          setOpen(false);
           ctx.invalidateQueries();
+          if (!payWithMP) {
+            setOpen(false);
+          }
+          else {
+            setMPSimulation(true);
+          }
         }
       });
   };
+
+  // const MPSimulation = response?.success && open //true
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -977,6 +1005,23 @@ function PayDebtDialog() {
         <Button variant="outline">Saldar deuda</Button>
       </DialogTrigger>
       <DialogContent>
+        {
+          MPSimulation ?  
+            <div className="text-center">
+              <img
+              className="mx-auto w-36"
+              alt="mercadopago"
+              src="https://logospng.org/download/mercado-pago/logo-mercado-pago-icone-1024.png"
+              />
+              <p className="text-slate-700 mt-4">Procesando transacción...</p>
+              <LoaderCircle className="text-slate-700 animate-spin mx-auto my-3 w-8 h-8"/>
+              <Button className="bg-[#00b5ec] text-[#1e2d6d] hover:bg-[#00b5ec7a] mt-8" onClick={()=> setOpen(false)}>
+                Confirmar pago
+                
+              </Button>
+
+            </div>
+            : <>
         <DialogHeader>
           <DialogTitle>Saldar deuda</DialogTitle>
           <DialogDescription>
@@ -1015,14 +1060,43 @@ function PayDebtDialog() {
             value={amount}
             type="number"
             onChange={(e) => setAmount(e.target.valueAsNumber)}
-          />
+            />
         </div>
+        <div className="mt-2 flex items-center gap-2">
+          <Checkbox
+            checked={payWithMP}
+            onCheckedChange={(checked) =>
+              checked !== "indeterminate" && setPayWithMP(checked)
+            }
+            />
+          <label>
+            Pagar con{""}
+            <img
+              className="ml-0.5 inline w-10"
+              alt="mercadopago"
+              src="https://logospng.org/download/mercado-pago/logo-mercado-pago-icone-1024.png"
+            />
+
+          </label>
+        </div>
+          
+        {response?.success === false && (
+          <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm">
+            <ul className="list-inside list-disc text-red-600">
+              {response.errors.map((error) => (
+                <li key={error}>{error}</li>
+              ))}
+            </ul>
+          </div>
+        )}
         <DialogFooter>
           <DialogClose asChild>
             <Button variant="outline">Cancelar</Button>
           </DialogClose>
           <Button onClick={handleSubmit}>Confirmar</Button>
         </DialogFooter>
+      </>
+    }
       </DialogContent>
     </Dialog>
   );

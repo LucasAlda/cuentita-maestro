@@ -40,7 +40,7 @@ const newGastitoSchema = z.object({
     .record(z.string(), z.number().nonnegative("La parte no debe ser negativa"))
     .refine((shares) => {
       return Object.keys(shares).length > 0;
-    }, "Debe haber al menos un deudor"),
+    }, "Debe seleccionarse al menos un miembro"),
 });
 
 export default async function handler(
