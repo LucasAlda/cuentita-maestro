@@ -13,6 +13,7 @@ import Link from "next/link";
 import { CircleUser, Menu } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/router";
+import { useNotification } from "@/hooks/use-notification";
 
 const menuItems = [
   {
@@ -28,6 +29,9 @@ const menuItems = [
 export function Navbar() {
   const session = useSession();
   const router = useRouter();
+  const notifications = useNotification();
+
+  console.log(notifications);
 
   return (
     <header className="sticky top-0 flex h-16 items-center justify-between gap-4 border-b bg-slate-800 px-4 md:px-6">
@@ -108,6 +112,15 @@ export function Navbar() {
               <>
                 <DropdownMenuLabel>{session.data.user.name}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {notifications.subscribed ? (
+                  <DropdownMenuItem onClick={() => signOut()}>
+                    Notificaciones activadas!
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem onClick={() => notifications.subscribe()}>
+                    Activar notificaciones
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={() => signOut()}>
                   Cerrar sesión
                 </DropdownMenuItem>

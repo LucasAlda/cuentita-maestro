@@ -1,22 +1,20 @@
-// import { env } from "@/env";
+import { env } from "@/env";
 import { db } from "@/server/db";
 import webPush from "web-push";
 
-/******  REINTRODUCIR CUANDO HAGAMOS NOTIFICACIONES Y ESTE EL ENV   ********/
-
-// webPush.setVapidDetails(
-//   `mailto:${env.WEB_PUSH_EMAIL}`,
-//   env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY ?? "",
-//   env.WEB_PUSH_PRIVATE_KEY ?? "",
-// );
+webPush.setVapidDetails(
+  `mailto:${env.WEB_PUSH_EMAIL}`,
+  env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY ?? "",
+  env.WEB_PUSH_PRIVATE_KEY ?? "",
+);
 
 export async function sendNotification(
-  id: string,
-  msg: { title: string; message: string },
+  userId: string,
+  msg: { title: string; message?: string },
 ) {
   const suscriptions = await db.notificationSuscription.findMany({
     where: {
-      userId: id,
+      userId,
     },
   });
 

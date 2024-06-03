@@ -17,13 +17,12 @@ export const env = createEnv({
     FACEBOOK_CLIENT_ID: z.string(),
     FACEBOOK_CLIENT_SECRET: z.string(),
     NEXT_URL: z.string(),
+    WEB_PUSH_EMAIL: z.string(),
+    WEB_PUSH_PRIVATE_KEY: z.string(),
   },
 
   client: {
-    /******  REINTRODUCIR CUANDO HAGAMOS NOTIFICACIONES   ********/
-    // NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY: z.string(),
-    // WEB_PUSH_EMAIL: z.string(),
-    // WEB_PUSH_PRIVATE_KEY: z.string(),
+    NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY: z.string(),
   },
 
   runtimeEnv: {
@@ -31,10 +30,10 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
-    // NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY:
-    //   process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY,
-    // WEB_PUSH_EMAIL: process.env.WEB_PUSH_EMAIL,
-    // WEB_PUSH_PRIVATE_KEY: process.env.WEB_PUSH_PRIVATE_KEY,
+    NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY:
+      process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY,
+    WEB_PUSH_EMAIL: process.env.WEB_PUSH_EMAIL,
+    WEB_PUSH_PRIVATE_KEY: process.env.WEB_PUSH_PRIVATE_KEY,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
     FACEBOOK_CLIENT_ID: process.env.FACEBOOK_CLIENT_ID,

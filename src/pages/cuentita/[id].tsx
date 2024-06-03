@@ -636,8 +636,6 @@ function Gastito({
   });
 
   const [open, setOpen] = useState(false);
-  const [openComplain, setOpenComplain] = useState(false);
-  const [description, setDescription] = useState("");
   const ctx = useQueryClient();
 
   async function handleDelete() {
@@ -708,40 +706,69 @@ function Gastito({
             >
               <Trash2 className="h-5 w-5 text-red-500" />
             </Button>
-            <Dialog open={openComplain} onOpenChange={setOpenComplain}>
-              <DialogTrigger asChild>
-                <Button variant="default">Reclamar</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Iniciar reclamo</DialogTitle>
-                  <DialogDescription>
-                    Escribí una breve descripción de tu reclamo. Se notificará a
-                    todos los miembros del grupo.
-                  </DialogDescription>
-                </DialogHeader>
-                <div>
-                  <Label htmlFor="descripcion">Descripción</Label>
-                  <Textarea
-                    id="descripcion"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                  />
-                </div>
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button variant={"outline"}>Cerrar</Button>
-                  </DialogClose>
-                  <Button variant={"default"}>Enviar</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <ComplaintDialog gastito={gastito} />
           </div>
           <div>
             <DialogClose asChild>
               <Button variant={"outline"}>Cerrar</Button>
             </DialogClose>
           </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ComplaintDialog({ gastito }: { gastito: Gastito }) {
+  const session = useSession();
+  const [open, setOpen] = useState(false);
+  const [description, setDescription] = useState("");
+
+  function send() {
+    fetch("/api/notifications/send-complaint", {
+      method: "POST",
+      headers: {
+        "Content-type": "application/json",
+      },
+      body: JSON.stringify({
+        cuentitaId: gastito.cuentitaId,
+        juanfra: session.data?.user.id,
+        title: `Nuevo reclamo por '${gastito.name}'`,
+        message: description,
+      }),
+    });
+    setOpen(false);
+    toast("Reclamo enviado exitosamente!");
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="default">Reclamar</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Iniciar reclamo</DialogTitle>
+          <DialogDescription>
+            Escribí una breve descripción de tu reclamo. Se notificará a todos
+            los miembros del grupo.
+          </DialogDescription>
+        </DialogHeader>
+        <div>
+          <Label htmlFor="descripcion">Descripción</Label>
+          <Textarea
+            id="descripcion"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant={"outline"}>Cerrar</Button>
+          </DialogClose>
+          <Button variant={"default"} onClick={send}>
+            Enviar
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
