@@ -743,7 +743,7 @@ function ComplaintDialog({ gastito }: { gastito: Gastito }) {
         cuentitaId: gastito.cuentitaId,
         juanfra: session.data?.user.id,
         title: `Nuevo reclamo por '${gastito.name}'`,
-        message: description,
+        message: `${session.data?.user.name}: ${description}`,
       }),
     });
     setOpen(false);
