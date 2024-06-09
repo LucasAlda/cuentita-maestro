@@ -80,6 +80,7 @@ function GroupList() {
   const [category, setCategory] = useState("cualquiera");
   const [date, setDate] = useState<DateRange | undefined>(undefined);
   const [user, setUser] = useState<string | undefined>("cualquiera");
+  const [onlyNegativeBalance, setOnlyNegativeBalance] = useState(false);
 
   if (!data || isError) {
     return null;
@@ -100,7 +101,9 @@ function GroupList() {
       user == "cualquiera" ||
       cuentita.users.find((otherUser) => otherUser.id === user);
 
-    return inCategory && inDateRange && hasSelectedUser;
+    const isNegative = !onlyNegativeBalance || cuentita.balance < 0;
+
+    return inCategory && inDateRange && hasSelectedUser && isNegative;
   });
 
   const repeatedUsers = data.flatMap((cuentita) => {
@@ -202,6 +205,15 @@ function GroupList() {
               </SelectGroup>
             </SelectContent>
           </Select>
+        </div>
+        <div className="flex items-center space-x-4">
+          <p>Solo con deudas:</p>
+          <Checkbox
+            checked={onlyNegativeBalance}
+            onCheckedChange={(checked) =>
+              checked !== "indeterminate" && setOnlyNegativeBalance(checked)
+            }
+          />
         </div>
       </div>
       <div className="divide-y divide-slate-200/70 rounded-lg bg-white shadow-md shadow-slate-200">
