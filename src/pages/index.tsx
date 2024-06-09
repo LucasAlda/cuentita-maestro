@@ -15,17 +15,30 @@ import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect, useState } from "react";
-import { ChevronRight, Copy } from "lucide-react";
+import { CalendarIcon, ChevronRight, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { type Cuentita } from "@prisma/client";
+import { User, type Cuentita } from "@prisma/client";
 import Link from "next/link";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { DateRange } from "react-day-picker";
+import React from "react";
+import { format } from "date-fns";
+import { useSession } from "next-auth/react";
 
 export default function Home() {
   return (
@@ -56,48 +69,175 @@ export const numberFormatter = new Intl.NumberFormat("es-AR", {
 });
 
 function GroupList() {
-  const { data, isError } = useQuery<(Cuentita & { balance: number })[]>({
+  const id = useSession().data?.user.id;
+
+  let { data, isError } = useQuery<
+    (Cuentita & { balance: number; users: User[] })[]
+  >({
     queryKey: ["/cuentita/list"],
   });
+
+  const [category, setCategory] = useState("cualquiera");
+  const [date, setDate] = useState<DateRange | undefined>(undefined);
+  const [user, setUser] = useState<string | undefined>("cualquiera");
 
   if (!data || isError) {
     return null;
   }
 
+  data = data.filter((cuentita) => {
+    const inCategory =
+      category === "cualquiera" || cuentita.category === category;
+
+    const createdAt = new Date(cuentita.createdAt as any as string);
+    const inDateRange =
+      !date ||
+      ((!date.from || createdAt >= date.from) &&
+        (!date.to || createdAt <= date.to));
+
+    const hasSelectedUser =
+      !user ||
+      user == "cualquiera" ||
+      cuentita.users.find((otherUser) => otherUser.id === user);
+
+    return inCategory && inDateRange && hasSelectedUser;
+  });
+
+  const allUsers = data.flatMap((cuentita) => {
+    return cuentita.users;
+  });
+  const users: User[] = [];
+  allUsers.forEach((user) => {
+    if (
+      user.id !== id &&
+      !users.find((otherUser) => otherUser.id === user.id)
+    ) {
+      users.push(user);
+    }
+  });
+
   return (
-    <div className="divide-y divide-slate-200/70 rounded-lg bg-white shadow-md shadow-slate-200">
-      {data.length === 0 && (
-        <div className="py-12 text-center text-sm italic text-slate-500">
-          No hay Cuentitas
+    <>
+      <div className="flex-col items-center space-y-4">
+        <div className="flex items-center space-x-4">
+          <p>Categoria:</p>
+          <Select
+            value={category}
+            onValueChange={(value) => setCategory(value)}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Categoria</SelectLabel>
+                <SelectItem value="cualquiera">Cualquiera</SelectItem>
+                <SelectItem value="evento">Evento</SelectItem>
+                <SelectItem value="familia">Familia</SelectItem>
+                <SelectItem value="amigos">Amigos</SelectItem>
+                <SelectItem value="deporte">Deporte</SelectItem>
+                <SelectItem value="hogar">Hogar</SelectItem>
+                <SelectItem value="viaje">Viaje</SelectItem>
+                <SelectItem value="otro">Otro</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </div>
-      )}
-      {data.map((cuentita) => (
-        <Link
-          href={`/cuentita/${cuentita.id}`}
-          key={cuentita.id}
-          className="block"
-        >
-          <button className="flex w-full items-center justify-between px-6 py-3 text-left hover:cursor-pointer hover:bg-slate-50">
-            <div>
-              <h3 className="font-semibold">{cuentita.name}</h3>
-              <p className="text-sm capitalize text-slate-500">
-                {cuentita.category}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <p
-                className={
-                  cuentita.balance >= 0 ? "text-green-600" : "text-red-600"
-                }
+        <div className="flex items-center space-x-4">
+          <p>Fecha:</p>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                id="date"
+                variant={"outline"}
+                className={cn(
+                  "w-[300px] justify-start text-left font-normal",
+                  !date && "text-muted-foreground",
+                )}
               >
-                {numberFormatter.format(cuentita.balance)}
-              </p>
-              <ChevronRight className="h-4 w-4 text-slate-400" />
-            </div>
-          </button>
-        </Link>
-      ))}
-    </div>
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {date?.from ? (
+                  date.to ? (
+                    <>
+                      {format(date.from, "LLL dd, y")} -{" "}
+                      {format(date.to, "LLL dd, y")}
+                    </>
+                  ) : (
+                    format(date.from, "LLL dd, y")
+                  )
+                ) : (
+                  <span>Desde - Hasta</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                initialFocus
+                mode="range"
+                defaultMonth={date?.from}
+                selected={date}
+                onSelect={setDate}
+                numberOfMonths={2}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+        <div className="flex items-center space-x-4">
+          <p>Miembro:</p>
+          <Select value={user} onValueChange={(value) => setUser(value)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Categoria</SelectLabel>
+                <SelectItem value="cualquiera">Cualquiera</SelectItem>
+                {users.map((user) => {
+                  return (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.name}
+                    </SelectItem>
+                  );
+                })}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="divide-y divide-slate-200/70 rounded-lg bg-white shadow-md shadow-slate-200">
+        {data.length === 0 && (
+          <div className="py-12 text-center text-sm italic text-slate-500">
+            No hay Cuentitas
+          </div>
+        )}
+        {data.map((cuentita) => (
+          <Link
+            href={`/cuentita/${cuentita.id}`}
+            key={cuentita.id}
+            className="block"
+          >
+            <button className="flex w-full items-center justify-between px-6 py-3 text-left hover:cursor-pointer hover:bg-slate-50">
+              <div>
+                <h3 className="font-semibold">{cuentita.name}</h3>
+                <p className="text-sm capitalize text-slate-500">
+                  {cuentita.category}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <p
+                  className={
+                    cuentita.balance >= 0 ? "text-green-600" : "text-red-600"
+                  }
+                >
+                  {numberFormatter.format(cuentita.balance)}
+                </p>
+                <ChevronRight className="h-4 w-4 text-slate-400" />
+              </div>
+            </button>
+          </Link>
+        ))}
+      </div>
+    </>
   );
 }
 

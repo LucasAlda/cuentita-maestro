@@ -33,7 +33,6 @@ export default async function handler(
             userId: session.user.id,
           },
         });
-
         const ownedGastitos = await db.gastito.aggregate({
           where: {
             ownerId: session.user.id,
@@ -43,16 +42,25 @@ export default async function handler(
             amount: true,
           },
         });
-
         const ownedAmount = Number(ownedGastitos._sum.amount ?? 0);
-
         const sharesAmount = shares.reduce(
           (balance: number, share) => balance + Number(share.amount),
           0,
         );
 
+        const users = await db.user.findMany({
+          where: {
+            member: {
+              some: {
+                cuentitaId: cuentita.id,
+              },
+            },
+          },
+        });
+
         return {
           ...cuentita,
+          users: users,
           balance: ownedAmount - sharesAmount,
         };
       }),
