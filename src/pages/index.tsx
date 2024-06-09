@@ -103,18 +103,18 @@ function GroupList() {
     return inCategory && inDateRange && hasSelectedUser;
   });
 
-  const allUsers = data.flatMap((cuentita) => {
+  const repeatedUsers = data.flatMap((cuentita) => {
     return cuentita.users;
   });
-  const users: User[] = [];
-  allUsers.forEach((user) => {
+  const users = repeatedUsers.reduce((users: User[], user) => {
     if (
       user.id !== id &&
       !users.find((otherUser) => otherUser.id === user.id)
     ) {
       users.push(user);
     }
-  });
+    return users;
+  }, []);
 
   return (
     <>
