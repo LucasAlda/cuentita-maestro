@@ -800,15 +800,17 @@ function GastitoTrigger({
 
   let shareTag;
 
-  if (share == undefined) {
-    shareTag = <></>;
-  } else if (isOwner) {
+  if (isOwner) {
     shareTag = (
       <p className="text-sm text-green-600">
         +
-        {numberFormatter.format(Number(gastito.amount) - Number(share?.amount))}
+        {numberFormatter.format(
+          Number(gastito.amount) - Number(share?.amount || 0),
+        )}
       </p>
     );
+  } else if (share == undefined) {
+    shareTag = <></>;
   } else {
     shareTag = (
       <p className="text-sm text-red-500">
