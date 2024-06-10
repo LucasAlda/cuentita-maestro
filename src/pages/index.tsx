@@ -26,7 +26,7 @@ import { useEffect, useState } from "react";
 import { CalendarIcon, ChevronRight, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { User, type Cuentita } from "@prisma/client";
+import { type User, type Cuentita } from "@prisma/client";
 import Link from "next/link";
 import {
   Popover,
@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { DateRange } from "react-day-picker";
+import { type DateRange } from "react-day-picker";
 import React from "react";
 import { format } from "date-fns";
 import { useSession } from "next-auth/react";
@@ -69,7 +69,7 @@ export const numberFormatter = new Intl.NumberFormat("es-AR", {
 });
 
 function GroupList() {
-  let { data, isError } = useQuery<
+  const { data, isError } = useQuery<
     (Cuentita & { balance: number; users: User[] })[]
   >({
     queryKey: ["/cuentita/list"],
@@ -82,11 +82,11 @@ function GroupList() {
     return null;
   }
 
-  data = data.filter((cuentita) => {
+  const filteredData = data.filter((cuentita) => {
     const inCategory =
       !filterState.category || cuentita.category === filterState.category;
 
-    const createdAt = new Date(cuentita.createdAt as any as string);
+    const createdAt = new Date(cuentita.createdAt);
     const inDateRange =
       !filterState.date ||
       ((!filterState.date.from || createdAt >= filterState.date.from) &&
@@ -111,12 +111,12 @@ function GroupList() {
     <>
       <Filters state={filterState} setState={setFilterState} />
       <div className="divide-y divide-slate-200/70 rounded-lg bg-white shadow-md shadow-slate-200">
-        {data.length === 0 && (
+        {filteredData.length === 0 && (
           <div className="py-12 text-center text-sm italic text-slate-500">
             No hay Cuentitas
           </div>
         )}
-        {data.map((cuentita) => (
+        {filteredData.map((cuentita) => (
           <Link
             href={`/cuentita/${cuentita.id}`}
             key={cuentita.id}
@@ -349,7 +349,7 @@ function Filters({
 }) {
   const id = useSession().data?.user.id;
 
-  let { data, isError } = useQuery<
+  const { data, isError } = useQuery<
     (Cuentita & { balance: number; users: User[] })[]
   >({
     queryKey: ["/cuentita/list"],
@@ -395,7 +395,7 @@ function Filters({
           <div className="grid grid-cols-[auto_1fr] items-center gap-4">
             <p>Categoria</p>
             <Select
-              value={state.category || "cualquiera"}
+              value={state.category ?? "cualquiera"}
               onValueChange={(category) =>
                 setState({
                   ...state,
@@ -459,7 +459,7 @@ function Filters({
             </Popover>
             <p>Miembro</p>
             <Select
-              value={state.user || "cualquiera"}
+              value={state.user ?? "cualquiera"}
               onValueChange={(user) =>
                 setState({
                   ...state,
