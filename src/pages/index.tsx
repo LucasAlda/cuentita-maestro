@@ -389,8 +389,11 @@ function Filters({
           <Button variant="outline">Avanzado</Button>
         </DialogTrigger>
         <DialogContent>
-          <div className="flex items-center space-x-4">
-            <p>Categoria:</p>
+          <DialogHeader>
+            <DialogTitle>Filtros avanzados</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-[auto_1fr] items-center gap-4">
+            <p>Categoria</p>
             <Select
               value={state.category || "cualquiera"}
               onValueChange={(category) =>
@@ -400,7 +403,7 @@ function Filters({
                 })
               }
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -417,16 +420,14 @@ function Filters({
                 </SelectGroup>
               </SelectContent>
             </Select>
-          </div>
-          <div className="flex items-center space-x-4">
-            <p>Fecha:</p>
+            <p>Fecha</p>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   id="date"
                   variant={"outline"}
                   className={cn(
-                    "w-[300px] justify-start text-left font-normal",
+                    "justify-start text-left font-normal",
                     !state.date && "text-muted-foreground",
                   )}
                 >
@@ -456,9 +457,7 @@ function Filters({
                 />
               </PopoverContent>
             </Popover>
-          </div>
-          <div className="flex items-center space-x-4">
-            <p>Miembro:</p>
+            <p>Miembro</p>
             <Select
               value={state.user || "cualquiera"}
               onValueChange={(user) =>
@@ -468,7 +467,7 @@ function Filters({
                 })
               }
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -485,9 +484,7 @@ function Filters({
                 </SelectGroup>
               </SelectContent>
             </Select>
-          </div>
-          <div className="flex items-center space-x-4">
-            <p>Solo con deudas:</p>
+            <p className="whitespace-nowrap">Solo deudor</p>
             <Checkbox
               checked={state.onlyNegativeBalance}
               onCheckedChange={(checked) =>
