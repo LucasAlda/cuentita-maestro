@@ -24,6 +24,9 @@ export default async function handler(
     include: {
       gastito: true,
     },
+    orderBy: {
+      gastito: { createdAt: "desc" },
+    },
   });
 
   res.json(
@@ -35,9 +38,14 @@ export default async function handler(
           },
         });
 
+        const gastito_shares = await db.share.findMany({
+          where: { gastitoId: share.gastitoId },
+        });
+
         return {
           ...share,
           name: cuentita?.name,
+          shares: gastito_shares,
         };
       }),
     ),

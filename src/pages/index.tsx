@@ -15,17 +15,30 @@ import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect, useState } from "react";
-import { ChevronRight, Copy } from "lucide-react";
+import { CalendarIcon, ChevronRight, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { type Cuentita } from "@prisma/client";
+import { type User, type Cuentita } from "@prisma/client";
 import Link from "next/link";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { type DateRange } from "react-day-picker";
+import React from "react";
+import { format } from "date-fns";
+import { useSession } from "next-auth/react";
 
 export default function Home() {
   return (
@@ -56,48 +69,81 @@ export const numberFormatter = new Intl.NumberFormat("es-AR", {
 });
 
 function GroupList() {
-  const { data, isError } = useQuery<(Cuentita & { balance: number })[]>({
+  const { data, isError } = useQuery<
+    (Cuentita & { balance: number; users: User[] })[]
+  >({
     queryKey: ["/cuentita/list"],
+  });
+  const [filterState, setFilterState] = useState<FilterState>({
+    onlyNegativeBalance: false,
   });
 
   if (!data || isError) {
     return null;
   }
 
+  const filteredData = data.filter((cuentita) => {
+    const inCategory =
+      !filterState.category || cuentita.category === filterState.category;
+
+    const createdAt = new Date(cuentita.createdAt);
+    const inDateRange =
+      !filterState.date ||
+      ((!filterState.date.from || createdAt >= filterState.date.from) &&
+        (!filterState.date.to || createdAt <= filterState.date.to));
+
+    const hasSelectedUser =
+      !filterState.user ||
+      cuentita.users.find((otherUser) => otherUser.id === filterState.user);
+
+    const isNegative = !filterState.onlyNegativeBalance || cuentita.balance < 0;
+
+    const inQuery =
+      !filterState.query ||
+      cuentita.name.toLowerCase().includes(filterState.query.toLowerCase());
+
+    return (
+      inCategory && inDateRange && hasSelectedUser && isNegative && inQuery
+    );
+  });
+
   return (
-    <div className="divide-y divide-slate-200/70 rounded-lg bg-white shadow-md shadow-slate-200">
-      {data.length === 0 && (
-        <div className="py-12 text-center text-sm italic text-slate-500">
-          No hay Cuentitas
-        </div>
-      )}
-      {data.map((cuentita) => (
-        <Link
-          href={`/cuentita/${cuentita.id}`}
-          key={cuentita.id}
-          className="block"
-        >
-          <button className="flex w-full items-center justify-between px-6 py-3 text-left hover:cursor-pointer hover:bg-slate-50">
-            <div>
-              <h3 className="font-semibold">{cuentita.name}</h3>
-              <p className="text-sm capitalize text-slate-500">
-                {cuentita.category}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <p
-                className={
-                  cuentita.balance >= 0 ? "text-green-600" : "text-red-600"
-                }
-              >
-                {numberFormatter.format(cuentita.balance)}
-              </p>
-              <ChevronRight className="h-4 w-4 text-slate-400" />
-            </div>
-          </button>
-        </Link>
-      ))}
-    </div>
+    <>
+      <Filters state={filterState} setState={setFilterState} />
+      <div className="divide-y divide-slate-200/70 rounded-lg bg-white shadow-md shadow-slate-200">
+        {filteredData.length === 0 && (
+          <div className="py-12 text-center text-sm italic text-slate-500">
+            No hay Cuentitas
+          </div>
+        )}
+        {filteredData.map((cuentita) => (
+          <Link
+            href={`/cuentita/${cuentita.id}`}
+            key={cuentita.id}
+            className="block"
+          >
+            <button className="flex w-full items-center justify-between px-6 py-3 text-left hover:cursor-pointer hover:bg-slate-50">
+              <div>
+                <h3 className="font-semibold">{cuentita.name}</h3>
+                <p className="text-sm capitalize text-slate-500">
+                  {cuentita.category}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <p
+                  className={
+                    cuentita.balance >= 0 ? "text-green-600" : "text-red-600"
+                  }
+                >
+                  {numberFormatter.format(cuentita.balance)}
+                </p>
+                <ChevronRight className="h-4 w-4 text-slate-400" />
+              </div>
+            </button>
+          </Link>
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -283,5 +329,185 @@ function CreateCuentitaLink(props: { link: string | undefined }) {
         </DialogClose>
       </DialogFooter>
     </>
+  );
+}
+
+type FilterState = {
+  category?: string;
+  user?: string;
+  date?: DateRange;
+  onlyNegativeBalance: boolean;
+  query?: string;
+};
+
+function Filters({
+  state,
+  setState,
+}: {
+  state: FilterState;
+  setState: (state: FilterState) => void;
+}) {
+  const id = useSession().data?.user.id;
+
+  const { data, isError } = useQuery<
+    (Cuentita & { balance: number; users: User[] })[]
+  >({
+    queryKey: ["/cuentita/list"],
+  });
+  if (!data || isError) {
+    return null;
+  }
+
+  const repeatedUsers = data.flatMap((cuentita) => {
+    return cuentita.users;
+  });
+  const users = repeatedUsers.reduce((users: User[], user) => {
+    if (
+      user.id !== id &&
+      !users.find((otherUser) => otherUser.id === user.id)
+    ) {
+      users.push(user);
+    }
+    return users;
+  }, []);
+
+  return (
+    <div className="flex gap-2">
+      <Input
+        className="bg-white"
+        placeholder="Filtrar por nombre"
+        value={state.query}
+        onChange={(e) =>
+          setState({
+            ...state,
+            query: e.target.value,
+          })
+        }
+      />
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button variant="outline">Avanzado</Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Filtros avanzados</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-[auto_1fr] items-center gap-4">
+            <p>Categoria</p>
+            <Select
+              value={state.category ?? "cualquiera"}
+              onValueChange={(category) =>
+                setState({
+                  ...state,
+                  category: category === "cualquiera" ? undefined : category,
+                })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Categoria</SelectLabel>
+                  <SelectItem value="cualquiera">Todas</SelectItem>
+                  <SelectItem value="evento">Evento</SelectItem>
+                  <SelectItem value="familia">Familia</SelectItem>
+                  <SelectItem value="amigos">Amigos</SelectItem>
+                  <SelectItem value="deporte">Deporte</SelectItem>
+                  <SelectItem value="hogar">Hogar</SelectItem>
+                  <SelectItem value="viaje">Viaje</SelectItem>
+                  <SelectItem value="otro">Otro</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <p>Fecha</p>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  id="date"
+                  variant={"outline"}
+                  className={cn(
+                    "justify-start text-left font-normal",
+                    !state.date && "text-muted-foreground",
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {state.date?.from ? (
+                    state.date.to ? (
+                      <>
+                        {format(state.date.from, "LLL dd, y")} -{" "}
+                        {format(state.date.to, "LLL dd, y")}
+                      </>
+                    ) : (
+                      format(state.date.from, "LLL dd, y")
+                    )
+                  ) : (
+                    <span>Desde - Hasta</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={state.date?.from}
+                  selected={state.date}
+                  onSelect={(date) => setState({ ...state, date })}
+                  numberOfMonths={2}
+                />
+              </PopoverContent>
+            </Popover>
+            <p>Miembro</p>
+            <Select
+              value={state.user ?? "cualquiera"}
+              onValueChange={(user) =>
+                setState({
+                  ...state,
+                  user: user === "cualquiera" ? undefined : user,
+                })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Miembros</SelectLabel>
+                  <SelectItem value="cualquiera">Todos</SelectItem>
+                  {users.map((user) => {
+                    return (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.name}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <p className="whitespace-nowrap">Solo deudor</p>
+            <Checkbox
+              checked={state.onlyNegativeBalance}
+              onCheckedChange={(checked) =>
+                checked !== "indeterminate" &&
+                setState({ ...state, onlyNegativeBalance: checked })
+              }
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() =>
+                setState({ onlyNegativeBalance: false, query: state.query })
+              }
+            >
+              Limpiar filtros
+            </Button>
+            <DialogClose>
+              <Button>Cerrar</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

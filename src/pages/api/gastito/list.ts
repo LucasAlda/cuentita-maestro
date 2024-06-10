@@ -21,6 +21,7 @@ export default async function handler(
       owner: true,
       shares: true,
     },
+    orderBy: { createdAt: "desc" },
   });
 
   res.json(

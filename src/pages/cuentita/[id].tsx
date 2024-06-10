@@ -17,7 +17,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { format } from "date-fns";
+import { type DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -35,17 +37,25 @@ import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { useSession } from "next-auth/react";
 import { numberFormatter } from "..";
-import { Copy, LoaderCircle, Trash2, X } from "lucide-react";
+import { CalendarIcon, Copy, LoaderCircle, Trash2, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { requestConfirmation } from "@/lib/request-confirmation";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 export default function Cuentita() {
   const router = useRouter();
@@ -800,15 +810,17 @@ function GastitoTrigger({
 
   let shareTag;
 
-  if (share == undefined) {
-    shareTag = <></>;
-  } else if (isOwner) {
+  if (isOwner) {
     shareTag = (
       <p className="text-sm text-green-600">
         +
-        {numberFormatter.format(Number(gastito.amount) - Number(share?.amount))}
+        {numberFormatter.format(
+          Number(gastito.amount) - Number(share?.amount ?? 0),
+        )}
       </p>
     );
+  } else if (share == undefined) {
+    shareTag = <></>;
   } else {
     shareTag = (
       <p className="text-sm text-red-500">
@@ -847,7 +859,12 @@ function GastitoTrigger({
 
 function MovementsList() {
   const router = useRouter();
+  const session = useSession();
   const cuentitaId = router.query.id as string;
+
+  const [filterState, setFilterState] = useState<FilterState>({
+    userParticipates: false,
+  });
 
   const { data: gastitos, isError: gastitosIsError } = useQuery<
     (Gastito & {
@@ -863,16 +880,219 @@ function MovementsList() {
     return null;
   }
 
+  const filteredData = gastitos.filter((gastito) => {
+    const inCategory =
+      !filterState.category || gastito.category === filterState.category;
+
+    const createdAt = new Date(gastito.createdAt);
+    const inDateRange =
+      !filterState.date ||
+      ((!filterState.date.from || createdAt >= filterState.date.from) &&
+        (!filterState.date.to || createdAt <= filterState.date.to));
+
+    const hasSelectedUser =
+      !filterState.user ||
+      gastito.shares.some((share) => share.userId === filterState.user) ||
+      gastito.ownerId === filterState.user;
+
+    const participates =
+      !filterState.userParticipates ||
+      gastito.shares.some((share) => share.userId === session.data?.user.id) ||
+      gastito.ownerId === session.data?.user.id;
+
+    const inQuery =
+      !filterState.query ||
+      gastito.name.toLowerCase().includes(filterState.query.toLowerCase());
+
+    return (
+      inCategory && inDateRange && hasSelectedUser && participates && inQuery
+    );
+  });
+
   return (
-    <div className="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
-      {gastitos.length === 0 && (
-        <div className="py-10 text-center text-sm italic text-slate-500">
-          No hay movimientos
-        </div>
-      )}
-      {gastitos.map((gastito) => (
-        <Gastito gastito={gastito} key={gastito.id} />
-      ))}
+    <>
+      <Filters
+        state={filterState}
+        setState={setFilterState}
+        cuentitaId={cuentitaId}
+      />
+      <div className="mt-2 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
+        {filteredData.length === 0 && (
+          <div className="py-10 text-center text-sm italic text-slate-500">
+            No hay movimientos
+          </div>
+        )}
+        {filteredData.map((gastito) => (
+          <Gastito gastito={gastito} key={gastito.id} />
+        ))}
+      </div>
+    </>
+  );
+}
+
+type FilterState = {
+  category?: string;
+  user?: string;
+  date?: DateRange;
+  userParticipates: boolean;
+  query?: string;
+};
+
+function Filters({
+  state,
+  setState,
+  cuentitaId,
+}: {
+  state: FilterState;
+  setState: (state: FilterState) => void;
+  cuentitaId: string;
+}) {
+  const { data: cuentitaInfo } = useQuery<
+    Cuentita & {
+      members: User[];
+    }
+  >({
+    queryKey: ["/cuentita/info", cuentitaId],
+    enabled: typeof cuentitaId === "string",
+  });
+
+  return (
+    <div className="flex gap-2">
+      <Input
+        className="bg-white"
+        placeholder="Filtrar por nombre"
+        value={state.query}
+        onChange={(e) =>
+          setState({
+            ...state,
+            query: e.target.value,
+          })
+        }
+      />
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button variant="outline">Avanzado</Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Filtros avanzados</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-[auto_1fr] items-center gap-4">
+            <p>Categoria</p>
+            <Select
+              value={state.category ?? "cualquiera"}
+              onValueChange={(category) =>
+                setState({
+                  ...state,
+                  category: category === "cualquiera" ? undefined : category,
+                })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Categoria</SelectLabel>
+                  <SelectItem value="cualquiera">Todas</SelectItem>
+                  <SelectItem value="evento">Evento</SelectItem>
+                  <SelectItem value="familia">Familia</SelectItem>
+                  <SelectItem value="amigos">Amigos</SelectItem>
+                  <SelectItem value="deporte">Deporte</SelectItem>
+                  <SelectItem value="hogar">Hogar</SelectItem>
+                  <SelectItem value="viaje">Viaje</SelectItem>
+                  <SelectItem value="otro">Otro</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <p>Fecha</p>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  id="date"
+                  variant={"outline"}
+                  className={cn(
+                    "justify-start text-left font-normal",
+                    !state.date && "text-muted-foreground",
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {state.date?.from ? (
+                    state.date.to ? (
+                      <>
+                        {format(state.date.from, "LLL dd, y")} -{" "}
+                        {format(state.date.to, "LLL dd, y")}
+                      </>
+                    ) : (
+                      format(state.date.from, "LLL dd, y")
+                    )
+                  ) : (
+                    <span>Desde - Hasta</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={state.date?.from}
+                  selected={state.date}
+                  onSelect={(date) => setState({ ...state, date })}
+                  numberOfMonths={2}
+                />
+              </PopoverContent>
+            </Popover>
+            <p>Miembro</p>
+            <Select
+              value={state.user ?? "cualquiera"}
+              onValueChange={(user) =>
+                setState({
+                  ...state,
+                  user: user === "cualquiera" ? undefined : user,
+                })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Miembros</SelectLabel>
+                  <SelectItem value="cualquiera">Todos</SelectItem>
+                  {cuentitaInfo?.members.map((user) => {
+                    return (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.name}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <p className="whitespace-nowrap">Yo participo</p>
+            <Checkbox
+              checked={state.userParticipates}
+              onCheckedChange={(checked) =>
+                checked !== "indeterminate" &&
+                setState({ ...state, userParticipates: checked })
+              }
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() =>
+                setState({ userParticipates: false, query: state.query })
+              }
+            >
+              Limpiar filtros
+            </Button>
+            <DialogClose>
+              <Button>Cerrar</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
