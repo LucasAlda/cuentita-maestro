@@ -69,18 +69,14 @@ export const numberFormatter = new Intl.NumberFormat("es-AR", {
 });
 
 function GroupList() {
-  const id = useSession().data?.user.id;
-
   let { data, isError } = useQuery<
     (Cuentita & { balance: number; users: User[] })[]
   >({
     queryKey: ["/cuentita/list"],
   });
-
-  const [category, setCategory] = useState("cualquiera");
-  const [date, setDate] = useState<DateRange | undefined>(undefined);
-  const [user, setUser] = useState<string | undefined>("cualquiera");
-  const [onlyNegativeBalance, setOnlyNegativeBalance] = useState(false);
+  const [filterState, setFilterState] = useState<FilterState>({
+    onlyNegativeBalance: false,
+  });
 
   if (!data || isError) {
     return null;
@@ -88,134 +84,32 @@ function GroupList() {
 
   data = data.filter((cuentita) => {
     const inCategory =
-      category === "cualquiera" || cuentita.category === category;
+      !filterState.category || cuentita.category === filterState.category;
 
     const createdAt = new Date(cuentita.createdAt as any as string);
     const inDateRange =
-      !date ||
-      ((!date.from || createdAt >= date.from) &&
-        (!date.to || createdAt <= date.to));
+      !filterState.date ||
+      ((!filterState.date.from || createdAt >= filterState.date.from) &&
+        (!filterState.date.to || createdAt <= filterState.date.to));
 
     const hasSelectedUser =
-      !user ||
-      user == "cualquiera" ||
-      cuentita.users.find((otherUser) => otherUser.id === user);
+      !filterState.user ||
+      cuentita.users.find((otherUser) => otherUser.id === filterState.user);
 
-    const isNegative = !onlyNegativeBalance || cuentita.balance < 0;
+    const isNegative = !filterState.onlyNegativeBalance || cuentita.balance < 0;
 
-    return inCategory && inDateRange && hasSelectedUser && isNegative;
+    const inQuery =
+      !filterState.query ||
+      cuentita.name.toLowerCase().includes(filterState.query.toLowerCase());
+
+    return (
+      inCategory && inDateRange && hasSelectedUser && isNegative && inQuery
+    );
   });
-
-  const repeatedUsers = data.flatMap((cuentita) => {
-    return cuentita.users;
-  });
-  const users = repeatedUsers.reduce((users: User[], user) => {
-    if (
-      user.id !== id &&
-      !users.find((otherUser) => otherUser.id === user.id)
-    ) {
-      users.push(user);
-    }
-    return users;
-  }, []);
 
   return (
     <>
-      <div className="flex-col items-center space-y-4">
-        <div className="flex items-center space-x-4">
-          <p>Categoria:</p>
-          <Select
-            value={category}
-            onValueChange={(value) => setCategory(value)}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Categoria</SelectLabel>
-                <SelectItem value="cualquiera">Cualquiera</SelectItem>
-                <SelectItem value="evento">Evento</SelectItem>
-                <SelectItem value="familia">Familia</SelectItem>
-                <SelectItem value="amigos">Amigos</SelectItem>
-                <SelectItem value="deporte">Deporte</SelectItem>
-                <SelectItem value="hogar">Hogar</SelectItem>
-                <SelectItem value="viaje">Viaje</SelectItem>
-                <SelectItem value="otro">Otro</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-center space-x-4">
-          <p>Fecha:</p>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                id="date"
-                variant={"outline"}
-                className={cn(
-                  "w-[300px] justify-start text-left font-normal",
-                  !date && "text-muted-foreground",
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {date?.from ? (
-                  date.to ? (
-                    <>
-                      {format(date.from, "LLL dd, y")} -{" "}
-                      {format(date.to, "LLL dd, y")}
-                    </>
-                  ) : (
-                    format(date.from, "LLL dd, y")
-                  )
-                ) : (
-                  <span>Desde - Hasta</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                initialFocus
-                mode="range"
-                defaultMonth={date?.from}
-                selected={date}
-                onSelect={setDate}
-                numberOfMonths={2}
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-        <div className="flex items-center space-x-4">
-          <p>Miembro:</p>
-          <Select value={user} onValueChange={(value) => setUser(value)}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Categoria</SelectLabel>
-                <SelectItem value="cualquiera">Cualquiera</SelectItem>
-                {users.map((user) => {
-                  return (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.name}
-                    </SelectItem>
-                  );
-                })}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-center space-x-4">
-          <p>Solo con deudas:</p>
-          <Checkbox
-            checked={onlyNegativeBalance}
-            onCheckedChange={(checked) =>
-              checked !== "indeterminate" && setOnlyNegativeBalance(checked)
-            }
-          />
-        </div>
-      </div>
+      <Filters state={filterState} setState={setFilterState} />
       <div className="divide-y divide-slate-200/70 rounded-lg bg-white shadow-md shadow-slate-200">
         {data.length === 0 && (
           <div className="py-12 text-center text-sm italic text-slate-500">
@@ -435,5 +329,188 @@ function CreateCuentitaLink(props: { link: string | undefined }) {
         </DialogClose>
       </DialogFooter>
     </>
+  );
+}
+
+type FilterState = {
+  category?: string;
+  user?: string;
+  date?: DateRange;
+  onlyNegativeBalance: boolean;
+  query?: string;
+};
+
+function Filters({
+  state,
+  setState,
+}: {
+  state: FilterState;
+  setState: (state: FilterState) => void;
+}) {
+  const id = useSession().data?.user.id;
+
+  let { data, isError } = useQuery<
+    (Cuentita & { balance: number; users: User[] })[]
+  >({
+    queryKey: ["/cuentita/list"],
+  });
+  if (!data || isError) {
+    return null;
+  }
+
+  const repeatedUsers = data.flatMap((cuentita) => {
+    return cuentita.users;
+  });
+  const users = repeatedUsers.reduce((users: User[], user) => {
+    if (
+      user.id !== id &&
+      !users.find((otherUser) => otherUser.id === user.id)
+    ) {
+      users.push(user);
+    }
+    return users;
+  }, []);
+
+  return (
+    <div className="flex gap-2">
+      <Input
+        className="bg-white"
+        placeholder="Filtrar por nombre"
+        value={state.query}
+        onChange={(e) =>
+          setState({
+            ...state,
+            query: e.target.value,
+          })
+        }
+      />
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button variant="outline">Avanzado</Button>
+        </DialogTrigger>
+        <DialogContent>
+          <div className="flex items-center space-x-4">
+            <p>Categoria:</p>
+            <Select
+              value={state.category || "cualquiera"}
+              onValueChange={(category) =>
+                setState({
+                  ...state,
+                  category: category === "cualquiera" ? undefined : category,
+                })
+              }
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Categoria</SelectLabel>
+                  <SelectItem value="cualquiera">Todas</SelectItem>
+                  <SelectItem value="evento">Evento</SelectItem>
+                  <SelectItem value="familia">Familia</SelectItem>
+                  <SelectItem value="amigos">Amigos</SelectItem>
+                  <SelectItem value="deporte">Deporte</SelectItem>
+                  <SelectItem value="hogar">Hogar</SelectItem>
+                  <SelectItem value="viaje">Viaje</SelectItem>
+                  <SelectItem value="otro">Otro</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center space-x-4">
+            <p>Fecha:</p>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  id="date"
+                  variant={"outline"}
+                  className={cn(
+                    "w-[300px] justify-start text-left font-normal",
+                    !state.date && "text-muted-foreground",
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {state.date?.from ? (
+                    state.date.to ? (
+                      <>
+                        {format(state.date.from, "LLL dd, y")} -{" "}
+                        {format(state.date.to, "LLL dd, y")}
+                      </>
+                    ) : (
+                      format(state.date.from, "LLL dd, y")
+                    )
+                  ) : (
+                    <span>Desde - Hasta</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={state.date?.from}
+                  selected={state.date}
+                  onSelect={(date) => setState({ ...state, date })}
+                  numberOfMonths={2}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div className="flex items-center space-x-4">
+            <p>Miembro:</p>
+            <Select
+              value={state.user || "cualquiera"}
+              onValueChange={(user) =>
+                setState({
+                  ...state,
+                  user: user === "cualquiera" ? undefined : user,
+                })
+              }
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Miembros</SelectLabel>
+                  <SelectItem value="cualquiera">Todos</SelectItem>
+                  {users.map((user) => {
+                    return (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.name}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center space-x-4">
+            <p>Solo con deudas:</p>
+            <Checkbox
+              checked={state.onlyNegativeBalance}
+              onCheckedChange={(checked) =>
+                checked !== "indeterminate" &&
+                setState({ ...state, onlyNegativeBalance: checked })
+              }
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() =>
+                setState({ onlyNegativeBalance: false, query: state.query })
+              }
+            >
+              Limpiar filtros
+            </Button>
+            <DialogClose>
+              <Button>Cerrar</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
