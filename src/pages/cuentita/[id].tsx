@@ -390,7 +390,7 @@ function EditCuentitaDialog() {
             </ul>
           </div>
         )}
-        <DialogFooter className="flex pt-2 sm:justify-between">
+        <DialogFooter className="flex flex-row justify-between pt-2">
           <div>
             <Button
               variant={"outline"}
@@ -401,7 +401,7 @@ function EditCuentitaDialog() {
               <Trash2 className="h-5 w-5 text-red-500" />
             </Button>
           </div>
-          <div className="flex gap-1 ">
+          <div className="flex gap-1">
             <DialogClose asChild>
               <Button variant="outline">Cancelar</Button>
             </DialogClose>
@@ -626,7 +626,7 @@ function AddGastitoDialog() {
             </ul>
           </div>
         )}
-        <DialogFooter>
+        <DialogFooter className="flex-row justify-between">
           <DialogClose asChild>
             <Button variant="outline">Cancelar</Button>
           </DialogClose>
@@ -715,7 +715,7 @@ function Gastito({
             );
           })}
         </div>
-        <DialogFooter className="flex pt-2 sm:justify-between">
+        <DialogFooter className="flex flex-row justify-between pt-2">
           <div className="flex gap-2">
             <Button
               variant={"outline"}
@@ -729,7 +729,7 @@ function Gastito({
           </div>
           <div>
             <DialogClose asChild>
-              <Button variant={"outline"}>Cerrar</Button>
+              <Button>Cerrar</Button>
             </DialogClose>
           </div>
         </DialogFooter>
@@ -763,7 +763,7 @@ function ComplaintDialog({ gastito }: { gastito: Gastito }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="default">Reclamar</Button>
+        <Button variant="outline">Reclamar</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -1078,7 +1078,7 @@ function Filters({
               }
             />
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-row justify-between max-sm:pt-2">
             <Button
               variant="outline"
               onClick={() =>
@@ -1319,7 +1319,7 @@ function PayDebtDialog() {
                 </ul>
               </div>
             )}
-            <DialogFooter>
+            <DialogFooter className="flex-row justify-between">
               <DialogClose asChild>
                 <Button variant="outline">Cancelar</Button>
               </DialogClose>
