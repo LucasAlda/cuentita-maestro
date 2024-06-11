@@ -766,7 +766,9 @@ function GastitoImage({ gastito }: { gastito: Gastito }) {
     })
       .then((res) => res.json())
       .then(({ url }: { url: string }) => {
-        setUploadingFile(undefined);
+        setTimeout(() => {
+          setUploadingFile(undefined);
+        }, 100);
         queryClient.setQueryData(
           [`/gastito/list?cuentitaId=${gastito.cuentitaId}`],
           (data: Gastito[]) => {
@@ -782,34 +784,61 @@ function GastitoImage({ gastito }: { gastito: Gastito }) {
       });
   }
 
+  function deleteFile() {
+    fetch("/api/images/delete", {
+      method: "POST",
+      body: JSON.stringify({ gastitoId: gastito.id }),
+      headers: { "Content-Type": "application/json" },
+    }).then(() => queryClient.invalidateQueries());
+  }
+
   if (gastito.imageUrl) {
     return (
-      <Dialog>
-        <DialogTrigger asChild>
-          <img
-            src={gastito.imageUrl}
-            alt={gastito.name}
-            className="mx-auto aspect-square w-[80%] rounded-lg object-cover"
-          />
-        </DialogTrigger>
-        <DialogContent>
-          <img
-            src={gastito.imageUrl}
-            alt={gastito.name}
-            className=" mt-4 w-full object-cover"
-          />
-        </DialogContent>
-      </Dialog>
+      <div className="relative mx-auto w-[80%]">
+        <button
+          onClick={deleteFile}
+          className="absolute right-0 top-0 z-30 flex h-6 w-6 -translate-y-1/3 translate-x-1/3 items-center justify-center rounded-full bg-slate-800 text-white"
+        >
+          <X className="h-3 w-3" />
+        </button>
+        <div className="relative mx-auto grid aspect-square content-center  justify-items-center overflow-hidden rounded-lg">
+          <Dialog>
+            <DialogTrigger asChild>
+              <img
+                src={gastito.imageUrl}
+                alt={gastito.name}
+                className="z-20 col-start-1 row-start-1 w-full object-cover"
+              />
+            </DialogTrigger>
+            <DialogContent>
+              <img
+                src={gastito.imageUrl}
+                alt={gastito.name}
+                className=" mt-4 w-full object-cover"
+              />
+            </DialogContent>
+          </Dialog>
+          {uploadingFile && (
+            <img
+              src={URL.createObjectURL(uploadingFile)}
+              alt={gastito.name}
+              className="z-10 col-start-1 row-start-1 w-full object-cover"
+            />
+          )}
+        </div>
+      </div>
     );
   }
 
   if (uploadingFile) {
     return (
-      <img
-        src={URL.createObjectURL(uploadingFile)}
-        alt={gastito.name}
-        className="mx-auto aspect-square w-[80%] rounded-lg object-cover"
-      />
+      <div className="relative mx-auto flex aspect-square w-[80%] items-center justify-center overflow-hidden rounded-lg">
+        <img
+          src={URL.createObjectURL(uploadingFile)}
+          alt={gastito.name}
+          className="w-full object-cover"
+        />
+      </div>
     );
   }
 
