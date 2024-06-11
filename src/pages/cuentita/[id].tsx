@@ -56,6 +56,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { useDropzone } from "react-dropzone";
 
 export default function Cuentita() {
   const router = useRouter();
@@ -390,7 +391,7 @@ function EditCuentitaDialog() {
             </ul>
           </div>
         )}
-        <DialogFooter className="flex flex-row justify-between pt-2">
+        <DialogFooter className="flex flex-row justify-between pt-2 sm:justify-between">
           <div>
             <Button
               variant={"outline"}
@@ -695,6 +696,7 @@ function Gastito({
           <p>Pagado por: {gastito.owner.name}</p>
           <p className="capitalize">Recurrencia: {gastito.repetition}</p>
         </div>
+        <GastitoImage gastito={gastito} />
         <h3 className=" font-bold">Participantes </h3>
         <div className="-mt-3 space-y-0.5 text-sm text-slate-700">
           {gastito.shares.map((share) => {
@@ -715,7 +717,7 @@ function Gastito({
             );
           })}
         </div>
-        <DialogFooter className="flex flex-row justify-between pt-2">
+        <DialogFooter className="flex flex-row justify-between pt-2 sm:justify-between">
           <div className="flex gap-2">
             <Button
               variant={"outline"}
@@ -735,6 +737,92 @@ function Gastito({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function GastitoImage({ gastito }: { gastito: Gastito }) {
+  const [uploadingFile, setUploadingFile] = useState<File>();
+  const queryClient = useQueryClient();
+
+  const { getInputProps, getRootProps } = useDropzone({
+    accept: {
+      "image/*": [],
+    },
+    multiple: false,
+    onDrop: (files) => {
+      setUploadingFile(files[0]);
+      uploadFile(files[0]);
+    },
+  });
+
+  function uploadFile(file: File) {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("gastitoId", gastito.id);
+
+    fetch("/api/images/upload", {
+      method: "POST",
+      body: formData,
+    })
+      .then((res) => res.json())
+      .then(({ url }: { url: string }) => {
+        setUploadingFile(undefined);
+        queryClient.setQueryData(
+          [`/gastito/list?cuentitaId=${gastito.cuentitaId}`],
+          (data: Gastito[]) => {
+            return data.map((g) => {
+              if (g.id !== gastito.id) {
+                return g;
+              }
+              return { ...g, imageUrl: url };
+            });
+          },
+        );
+        queryClient.invalidateQueries();
+      });
+  }
+
+  if (gastito.imageUrl) {
+    return (
+      <Dialog>
+        <DialogTrigger asChild>
+          <img
+            src={gastito.imageUrl}
+            alt={gastito.name}
+            className="mx-auto aspect-square w-[80%] rounded-lg object-cover"
+          />
+        </DialogTrigger>
+        <DialogContent>
+          <img
+            src={gastito.imageUrl}
+            alt={gastito.name}
+            className=" mt-4 w-full object-cover"
+          />
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (uploadingFile) {
+    return (
+      <img
+        src={URL.createObjectURL(uploadingFile)}
+        alt={gastito.name}
+        className="mx-auto aspect-square w-[80%] rounded-lg object-cover"
+      />
+    );
+  }
+
+  return (
+    <div>
+      <div
+        {...getRootProps()}
+        className="h-16 rounded-md border border-dashed border-slate-400 text-center text-xs leading-[4rem] hover:bg-slate-50"
+      >
+        <input {...getInputProps()} />
+        Arrastrá tu foto o hacé click para subir
+      </div>
+    </div>
   );
 }
 

@@ -19,6 +19,8 @@ export const env = createEnv({
     NEXT_URL: z.string(),
     WEB_PUSH_EMAIL: z.string(),
     WEB_PUSH_PRIVATE_KEY: z.string(),
+    UPLOAD_DIR: z.string(),
+    UPLOAD_URL: z.string(),
   },
 
   client: {
@@ -39,6 +41,8 @@ export const env = createEnv({
     FACEBOOK_CLIENT_ID: process.env.FACEBOOK_CLIENT_ID,
     FACEBOOK_CLIENT_SECRET: process.env.FACEBOOK_CLIENT_SECRET,
     NEXT_URL: process.env.NEXT_URL,
+    UPLOAD_DIR: process.env.UPLOAD_DIR,
+    UPLOAD_URL: process.env.UPLOAD_URL,
   },
 
   skipValidation: false,

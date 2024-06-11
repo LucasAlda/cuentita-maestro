@@ -53,6 +53,7 @@
     "cmdk": "^1.0.0",
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.0.2",
+    "formidable": "^3.5.1",
     "input-otp": "^1.2.4",
     "lucide-react": "^0.367.0",
     "next": "^14.2.3",
@@ -62,6 +63,7 @@
     "react": "18.2.0",
     "react-day-picker": "^8.10.0",
     "react-dom": "18.2.0",
+    "react-dropzone": "^14.2.3",
     "react-hook-form": "^7.51.3",
     "react-resizable-panels": "^2.0.16",
     "sonner": "^1.4.41",
@@ -73,6 +75,7 @@
   },
   "devDependencies": {
     "@types/eslint": "^8.56.2",
+    "@types/formidable": "^3.4.5",
     "@types/next-pwa": "^5.6.9",
     "@types/node": "^20.11.20",
     "@types/react": "^18.2.57",

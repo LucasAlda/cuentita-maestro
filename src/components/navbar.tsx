@@ -31,8 +31,6 @@ export function Navbar() {
   const router = useRouter();
   const notifications = useNotification();
 
-  console.log(notifications);
-
   return (
     <header className="sticky top-0 flex h-16 items-center justify-between gap-4 border-b bg-slate-800 px-4 md:px-6">
       <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-3 md:text-sm lg:gap-4">
