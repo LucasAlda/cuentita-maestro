@@ -37,7 +37,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { type DateRange } from "react-day-picker";
 import React from "react";
-import { format } from "date-fns";
+import { addDays, format } from "date-fns";
 import { useSession } from "next-auth/react";
 
 export default function Home() {
@@ -90,7 +90,7 @@ function GroupList() {
     const inDateRange =
       !filterState.date ||
       ((!filterState.date.from || createdAt >= filterState.date.from) &&
-        (!filterState.date.to || createdAt <= filterState.date.to));
+        (!filterState.date.to || createdAt <= addDays(filterState.date.to, 1)));
 
     const hasSelectedUser =
       !filterState.user ||

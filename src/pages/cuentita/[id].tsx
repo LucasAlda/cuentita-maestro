@@ -16,7 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { format } from "date-fns";
+import { addDays, format } from "date-fns";
 import { type DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -1005,7 +1005,7 @@ function MovementsList() {
     const inDateRange =
       !filterState.date ||
       ((!filterState.date.from || createdAt >= filterState.date.from) &&
-        (!filterState.date.to || createdAt <= filterState.date.to));
+        (!filterState.date.to || createdAt <= addDays(filterState.date.to, 1)));
 
     const hasSelectedUser =
       !filterState.user ||
@@ -1112,13 +1112,17 @@ function Filters({
                 <SelectGroup>
                   <SelectLabel>Categoria</SelectLabel>
                   <SelectItem value="cualquiera">Todas</SelectItem>
-                  <SelectItem value="evento">Evento</SelectItem>
-                  <SelectItem value="familia">Familia</SelectItem>
-                  <SelectItem value="amigos">Amigos</SelectItem>
-                  <SelectItem value="deporte">Deporte</SelectItem>
+                  <SelectItem value="varios">Varios</SelectItem>
+                  <SelectItem value="supermercado">Supermercado</SelectItem>
                   <SelectItem value="hogar">Hogar</SelectItem>
+                  <SelectItem value="alquiler">Alquiler</SelectItem>
+                  <SelectItem value="gasolina">Gasolina</SelectItem>
                   <SelectItem value="viaje">Viaje</SelectItem>
-                  <SelectItem value="otro">Otro</SelectItem>
+                  <SelectItem value="salida">Salida</SelectItem>
+                  <SelectItem value="deporte">Deporte</SelectItem>
+                  <SelectItem value="entretenimiento">
+                    Entretenimiento
+                  </SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
