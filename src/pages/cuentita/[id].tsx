@@ -1112,6 +1112,7 @@ function Filters({
                 <SelectGroup>
                   <SelectLabel>Categoria</SelectLabel>
                   <SelectItem value="cualquiera">Todas</SelectItem>
+                  <SelectItem value="pago">Pagos</SelectItem>
                   <SelectItem value="varios">Varios</SelectItem>
                   <SelectItem value="supermercado">Supermercado</SelectItem>
                   <SelectItem value="hogar">Hogar</SelectItem>
