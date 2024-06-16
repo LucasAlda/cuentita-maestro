@@ -31,7 +31,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import React, { useEffect, useState } from "react";
+import React, { ReactNode, useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -45,7 +45,14 @@ import {
 } from "@/components/ui/select";
 import { useSession } from "next-auth/react";
 import { numberFormatter } from "..";
-import { CalendarIcon, Copy, LoaderCircle, Trash2, X } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarIcon,
+  Copy,
+  LoaderCircle,
+  Trash2,
+  X,
+} from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { requestConfirmation } from "@/lib/request-confirmation";
 import { toast } from "sonner";
@@ -57,8 +64,11 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useDropzone } from "react-dropzone";
+import { optimizePayments } from "@/lib/optimize-payments";
 
 export default function Cuentita() {
+  const session = useSession();
+  const userId = session.data?.user.id;
   const router = useRouter();
   const id = router.query.id as string;
 
@@ -119,7 +129,9 @@ export default function Cuentita() {
                     <AddGastitoDialog />
                   </TabsContent>
                   <TabsContent value="balances" className="mt-0">
-                    <PayDebtDialog />
+                    <PayDebtDialog fromId={userId ?? ""} toId="" amount={0}>
+                      <Button variant={"outline"}> Saldar Deuda </Button>
+                    </PayDebtDialog>
                   </TabsContent>
                 </div>
                 <TabsContent value="movements">
@@ -127,6 +139,7 @@ export default function Cuentita() {
                 </TabsContent>
                 <TabsContent className="min-h-32" value="balances">
                   <Balances />
+                  <PaymentPlan />
                 </TabsContent>
               </Tabs>
             </>
@@ -1223,7 +1236,7 @@ function Balances() {
   const router = useRouter();
   const cuentitaId = router.query.id as string;
   const { data } = useQuery<
-    Cuentita & { users: (User & { balance: number })[] }
+    Cuentita & { users: Array<User & { balance: number }> }
   >({
     queryKey: ["/cuentita/info", cuentitaId],
     refetchInterval: 5 * 1000,
@@ -1272,14 +1285,61 @@ function Balances() {
   );
 }
 
-function PayDebtDialog() {
+function PaymentPlan() {
   const router = useRouter();
   const cuentitaId = router.query.id as string;
-  const ownerId = useSession().data?.user.id!;
+  const { data } = useQuery<
+    Cuentita & { users: Array<User & { balance: number }> }
+  >({
+    queryKey: ["/cuentita/info", cuentitaId],
+    refetchInterval: 5 * 1000,
+  });
+
+  if (!data) {
+    return null;
+  }
+
+  const payments = optimizePayments(data.users);
+
+  return (
+    <>
+      <h2 className=" mt-2 font-semibold">Plan de Pagos</h2>
+      <div className="mt-2 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
+        {payments.map((payment) => (
+          <PayDebtDialog
+            key={`${payment.fromId}-${payment.toId}`}
+            fromId={payment.fromId}
+            toId={payment.toId}
+            amount={payment.amount}
+          >
+            <button className="flex w-full items-center justify-between px-4 py-3 hover:bg-slate-50">
+              <div className="flex items-center gap-2">
+                {data.users.find((u) => u.id === payment.fromId)?.name}
+                <ArrowRight className="h-4 w-4" />
+                {data.users.find((u) => u.id === payment.toId)?.name}
+              </div>
+              <div>{numberFormatter.format(payment.amount)}</div>
+            </button>
+          </PayDebtDialog>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function PayDebtDialog(props: {
+  fromId: string;
+  toId: string;
+  amount: number;
+  children: ReactNode;
+}) {
+  const router = useRouter();
+  const cuentitaId = router.query.id as string;
 
   const [open, setOpen] = useState(false);
-  const [target, setTarget] = useState<string>("");
-  const [amount, setAmount] = useState(0);
+  const [fromId, setFromId] = useState<string>(props.fromId);
+  const [toId, setToId] = useState<string>(props.toId);
+  const [amount, setAmount] = useState(props.amount);
   const [payWithMP, setPayWithMP] = useState(false);
   const [response, setResponse] = useState<CreateResponse>();
   const [MPSimulation, setMPSimulation] = useState(false);
@@ -1287,14 +1347,15 @@ function PayDebtDialog() {
   useEffect(() => {
     if (!open) {
       setTimeout(() => {
-        setTarget("");
-        setAmount(0);
+        setFromId(props.fromId);
+        setToId(props.toId);
+        setAmount(props.amount);
         setResponse(undefined);
         setPayWithMP(false);
         setMPSimulation(false);
       }, 300);
     }
-  }, [open]);
+  }, [open, props.amount, props.fromId, props.toId]);
 
   const ctx = useQueryClient();
 
@@ -1312,11 +1373,11 @@ function PayDebtDialog() {
     const repetition = "unico";
 
     const shares: Shares = {};
-    if (target !== "") {
-      shares[target] = 1;
+    if (toId !== "") {
+      shares[toId] = 1;
     }
 
-    const targetUser = cuentitaInfo?.members.find((user) => user.id === target);
+    const targetUser = cuentitaInfo?.members.find((user) => user.id === toId);
     const name = `Pago a ${targetUser?.name}`;
 
     fetch("/api/gastito/create", {
@@ -1328,7 +1389,7 @@ function PayDebtDialog() {
         category,
         amount,
         repetition,
-        ownerId,
+        ownerId: fromId,
         shares,
       }),
     })
@@ -1350,9 +1411,7 @@ function PayDebtDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline">Saldar deuda</Button>
-      </DialogTrigger>
+      <DialogTrigger asChild>{props.children}</DialogTrigger>
       <DialogContent>
         {MPSimulation ? (
           <div className="text-center">
@@ -1378,23 +1437,45 @@ function PayDebtDialog() {
                 Marcá a quién le pagaste y cuánto
               </DialogDescription>
             </DialogHeader>
+            <div className="space-y-1">
+              <Label htmlFor="usuario" className="text-right">
+                Usuario que paga
+              </Label>
+              <Select
+                value={fromId}
+                onValueChange={(value) => {
+                  if (value === toId) {
+                    setToId("");
+                  }
+                  setFromId(value);
+                }}
+              >
+                <SelectTrigger id="usuario" className="col-span-3">
+                  <SelectValue placeholder="Selecciona quien paga" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cuentitaInfo?.members.map((user) => {
+                    return (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.name}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
 
             <div className="space-y-1">
               <Label htmlFor="usuario" className="text-right">
-                Usuario a pagar
+                Usuario que recibe
               </Label>
-              <Select
-                value={target}
-                onValueChange={(value) => setTarget(value)}
-              >
+              <Select value={toId} onValueChange={(value) => setToId(value)}>
                 <SelectTrigger id="usuario" className="col-span-3">
-                  <SelectValue placeholder="Selecciona a quien le pagaste" />
+                  <SelectValue placeholder="Selecciona quien recibe" />
                 </SelectTrigger>
                 <SelectContent>
                   {cuentitaInfo?.members
-                    .filter((user) => {
-                      return user.id !== ownerId;
-                    })
+                    .filter((user) => user.id !== fromId)
                     .map((user) => {
                       return (
                         <SelectItem key={user.id} value={user.id}>
