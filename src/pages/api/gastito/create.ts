@@ -1,5 +1,6 @@
 import { getServerAuthSession } from "@/server/auth";
 import { db } from "@/server/db";
+import { sendNotification } from "@/server/notify";
 import { type NextApiRequest, type NextApiResponse } from "next";
 import { z } from "zod";
 
@@ -93,5 +94,39 @@ export default async function handler(
     }),
   });
 
+  const cuentita = await db.cuentita.findFirst({
+    where: {id: newGastito.data.cuentitaId},
+  });
+
+  const owner = await db.user.findUnique({
+    where: {id: newGastito.data.ownerId},
+  });
+
+  await Promise.all(
+    Object.keys(newGastito.data.shares)
+      .filter((u: string) => u !== session.user.id)
+      .map((user) =>{
+        if (gastito.category === "pago") {
+          return sendNotification(user, {
+            title: `${cuentita?.name}: Pago realizado`,
+            message: `${owner?.name} te pagó ${ numberFormatter.format(Number(gastito.amount))}`,
+          })  
+        }
+        return sendNotification(user, {
+          title: `${cuentita?.name}: Nuevo gastito`,
+          message: `${owner?.name} agregó "${gastito.name}"`,
+        })
+      }
+    ),
+  );
+
   res.json({ success: true });
 }
+
+
+const numberFormatter = new Intl.NumberFormat("es-AR", {
+  style: "currency",
+  currency: "ARS",
+  maximumFractionDigits: 2,
+  minimumIntegerDigits: 2,
+});

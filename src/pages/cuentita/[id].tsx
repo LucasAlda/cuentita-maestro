@@ -881,7 +881,7 @@ function ComplaintDialog({ gastito }: { gastito: Gastito }) {
       },
       body: JSON.stringify({
         cuentitaId: gastito.cuentitaId,
-        juanfra: session.data?.user.id,
+        juanfra: session.data?.user.id, 
         title: `Nuevo reclamo por '${gastito.name}'`,
         message: `${session.data?.user.name}: ${description}`,
       }),

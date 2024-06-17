@@ -45,7 +45,7 @@ export default function Invite() {
         if (!res.ok) throw await res.json();
 
         toast.success("¡Te has unido a la cuentita!");
-        router.push("/");
+        router.push("/cuentita/" + id);
       })
       .catch((err) => {
         toast.error((err.message as string) ?? "Error al unirse a la cuentita");

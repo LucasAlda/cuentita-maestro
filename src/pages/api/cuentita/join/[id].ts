@@ -1,6 +1,7 @@
 import { getServerAuthSession } from "@/server/auth";
 import { db } from "@/server/db";
 import { type NextApiRequest, type NextApiResponse } from "next";
+import { sendNotification } from "@/server/notify";
 
 export default async function handler(
   req: NextApiRequest,
@@ -49,7 +50,31 @@ export default async function handler(
     },
   });
 
+  const users = await db.user.findMany({
+    where: {
+      member: {
+        some: {
+          cuentitaId: id,
+        },
+      },
+    },
+  });
+
+  await Promise.all(
+    users
+      .filter((u) => u.id !== session.user.id)
+      .map((user) =>
+        sendNotification(user.id, {
+          title: `${cuentita.name}: Nuevo miembro`,
+          message: `Bienvenido, ${session.user.name}!`,
+        }),
+      ),
+  );
+
+
   res.json({
     success: true,
   });
+
+  
 }
