@@ -11,6 +11,8 @@ export function optimizePayments(
     const to = balances.at(-1)!;
     const amount = Number(Math.min(-from.balance, to.balance).toFixed(2));
 
+    if (amount < 0.01) return;
+
     payments.push({
       fromId: from.id,
       toId: to.id,
