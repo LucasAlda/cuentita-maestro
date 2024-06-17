@@ -5,7 +5,8 @@ export function optimizePayments(
   const balances = structuredClone(initialBalances);
   balances.sort((a, b) => a.balance - b.balance);
 
-  while (balances[0].balance < 0) {
+  let i = 0;
+  while (balances[0].balance < 0 && i < balances.length * 5) {
     const from = balances[0];
     const to = balances.at(-1)!;
     const amount = Math.min(-from.balance, to.balance);
@@ -20,6 +21,7 @@ export function optimizePayments(
     to.balance -= amount;
 
     balances.sort((a, b) => a.balance - b.balance);
+    i++;
   }
 
   return payments;
