@@ -27,7 +27,8 @@ export async function calculateBalance(
   const ownedAmount = Number(ownedGastitos._sum.amount ?? 0);
 
   const sharesAmount = shares.reduce(
-    (balance: number, share) => balance + Number(share.amount),
+    (balance: number, share) =>
+      Number((balance + Number(share.amount)).toFixed(2)),
     0,
   );
 
