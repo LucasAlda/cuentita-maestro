@@ -18,7 +18,7 @@ export function optimizePayments(
     });
 
     from.balance = Number((from.balance + amount).toFixed(2));
-    to.balance = Number((from.balance - amount).toFixed(2));
+    to.balance = Number((to.balance - amount).toFixed(2));
 
     balances.sort((a, b) => a.balance - b.balance);
     i++;
