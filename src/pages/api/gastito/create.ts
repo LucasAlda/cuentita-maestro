@@ -83,9 +83,13 @@ export default async function handler(
     (a: number, b: number) => a + b,
   );
 
+  let amountLeft = Number(gastito.amount);
   await db.share.createMany({
     data: Object.entries(newGastito.data.shares).map(([userId, share]) => {
-      const amount = (share / totalShares) * Number(gastito.amount);
+      let amount = round((share / totalShares) * Number(gastito.amount), 2);
+      if (amount > amountLeft) amount = amountLeft;
+      amountLeft = round(amountLeft - amount, 2);
+
       return {
         gastitoId: gastito.id,
         userId,
@@ -95,34 +99,32 @@ export default async function handler(
   });
 
   const cuentita = await db.cuentita.findFirst({
-    where: {id: newGastito.data.cuentitaId},
+    where: { id: newGastito.data.cuentitaId },
   });
 
   const owner = await db.user.findUnique({
-    where: {id: newGastito.data.ownerId},
+    where: { id: newGastito.data.ownerId },
   });
 
   await Promise.all(
     Object.keys(newGastito.data.shares)
       .filter((u: string) => u !== session.user.id)
-      .map((user) =>{
+      .map((user) => {
         if (gastito.category === "pago") {
           return sendNotification(user, {
             title: `${cuentita?.name}: Pago realizado`,
-            message: `${owner?.name} te pagó ${ numberFormatter.format(Number(gastito.amount))}`,
-          })  
+            message: `${owner?.name} te pagó ${numberFormatter.format(Number(gastito.amount))}`,
+          });
         }
         return sendNotification(user, {
           title: `${cuentita?.name}: Nuevo gastito`,
           message: `${owner?.name} agregó "${gastito.name}"`,
-        })
-      }
-    ),
+        });
+      }),
   );
 
   res.json({ success: true });
 }
-
 
 const numberFormatter = new Intl.NumberFormat("es-AR", {
   style: "currency",
@@ -130,3 +132,7 @@ const numberFormatter = new Intl.NumberFormat("es-AR", {
   maximumFractionDigits: 2,
   minimumIntegerDigits: 2,
 });
+
+function round(value: number, decimals: number) {
+  return Number(value.toFixed(decimals));
+}
