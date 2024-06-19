@@ -4,7 +4,10 @@
 
 1. Clonar el repositorio
 2. Instalar las dependencias con `npm install`
-3. Copiar el archivo `.env.example` a `.env` y completar las variables de entorno
+3. Copiar el archivo `.env.example` a `.env` y completar las variables de entorno.
+   a. Elegir donde almacenar los uploaded-files (en produccion se recomienda tenerlo fuera de la carpeta proyecto con otra url con un reverse proxy)
+   b. Obtener las claves de OAuth de Google y Facebook para el login social
+   c. Correr `npm run vapid` para generar los datos necesarios para las notificaciones push
 4. Correr el proyecto con `npm run db:push` para crear la base de datos (`./prisma/db.sqlite`)
 5. Correr `npm run dev` para correr el proyecto en modo desarrollo
 6. Listo! Se va a abrir en `http://localhost:3000`
@@ -142,11 +145,12 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 Maneja todas las requests para hacer gets de datos facilmente.
 
 Uso: es un hook `useQuery` que recibe como parametro un objeto con las configuraciones, las principales son:
+
 - `queryKey`: es un array que tiene los strings que va a usar para formar la url a la que hacer el GET y usa ReactQuery internamente como key para el cache y cosas que no van al caso
-    Ej: `queryKey: ['groups', 'list']` es una request a `http://localhost:3000/api/groups/list` (la formula seria ENDPOINT + '/api/' + queryKey[0] + '/' +  queryKey[1] + '/' + ... + queryKey[n])  
+  Ej: `queryKey: ['groups', 'list']` es una request a `http://localhost:3000/api/groups/list` (la formula seria ENDPOINT + '/api/' + queryKey[0] + '/' + queryKey[1] + '/' + ... + queryKey[n])
 - `refetchInterval`: intervalo en milisegundos para hacer un refetch al endpoint
 - `enabled`: es un booleano para poder hacer que no haga el fetch hasta que no se cumpla cierta condicion necesaria para el request
-    Ej: `enabled: session.user !== undefined` si el query va a pasarle el id del usuario algo  
+  Ej: `enabled: typeof session.user !== "undefined"` si el query va a pasarle el id del usuario algo
 
 ### Tailwind
 
@@ -157,6 +161,7 @@ Uso: <div className="w-40 h-10 p-4 bg-white rounded-lg">
 ### Prisma
 
 En el `prisma/schema.prisma` se definen las tablas con un schema definido por prisma (bastante comprensible) que despues este usa para dos cosas:
+
 1. Generar la base de datos con ese schema (en nuestro caso un sqlite en `prisma/db.sqlite` que es una base sql en formato de archivo asi que no necesitamos docker, ni instalar nada)
 2. Generar los tipos de Typescript para facilmente poder acceder a sus keys y demas sin tener que definir el tipo (similar a un struct de rust) a mano
 
